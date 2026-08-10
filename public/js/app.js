@@ -34,6 +34,43 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ---- DYNAMIC NAVBAR AUTH STATE (HIDES PORTAL LOGIN WHEN LOGGED IN) ----
+function updateNavAuthState() {
+  const savedStu = sessionStorage.getItem('stuData');
+  const savedAdmin = sessionStorage.getItem('jigyasa_admin_token');
+  const navActions = document.querySelectorAll('.nav-actions');
+
+  navActions.forEach(action => {
+    if (savedAdmin) {
+      action.innerHTML = `
+        <a href="/admin-portal.html" class="btn btn-grad btn-sm" style="margin-right:0.4rem;">
+          <i class="fa-solid fa-user-shield"></i> Director Desk
+        </a>
+        <button class="btn btn-ghost btn-sm" onclick="logoutAdmin()">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      `;
+    } else if (savedStu) {
+      let stuObj = {};
+      try { stuObj = JSON.parse(savedStu); } catch(e){}
+      action.innerHTML = `
+        <a href="/student-portal.html" class="btn btn-grad btn-sm" style="margin-right:0.4rem;">
+          <i class="fa-solid fa-user-graduate"></i> My Portal (${stuObj.studentId || 'Active'})
+        </a>
+        <button class="btn btn-ghost btn-sm" onclick="logoutStudent()">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      `;
+    } else {
+      action.innerHTML = `
+        <a href="/student-portal.html" class="btn btn-grad">
+          <i class="fa-solid fa-user-graduate"></i> Portal Login
+        </a>
+      `;
+    }
+  });
+}
+
 // ---- QUICK INQUIRY EMAIL MODAL ----
 function openQuickInquiryModal() {
   const modal = document.getElementById('quickInquiryModal');
@@ -410,6 +447,7 @@ function _starStr(rating) {
 
 // INIT
 document.addEventListener('DOMContentLoaded', () => {
+  updateNavAuthState();
   setupReveal();
   animateHeroBars();
   _loadDynamicCourses();
@@ -419,6 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Expose globally
+window.updateNavAuthState   = updateNavAuthState;
 window.openQuickInquiryModal   = openQuickInquiryModal;
 window.closeQuickInquiryModal  = closeQuickInquiryModal;
 window.handleQuickInquirySubmit= handleQuickInquirySubmit;

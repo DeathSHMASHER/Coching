@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _renderStudentDash();
     } catch (e) {}
   }
+  if (window.updateNavAuthState) window.updateNavAuthState();
 });
 
 async function handleStudentLogin(e) {
@@ -79,6 +80,8 @@ async function _renderStudentDash() {
   if (crsEl)  crsEl.textContent  = _currentStudent.course;
   if (btchEl) btchEl.textContent = _currentStudent.batch || 'Evening Batch Alpha';
 
+  if (window.updateNavAuthState) window.updateNavAuthState();
+
   // Render Sub-modules
   _loadStudentLiveClasses();
   _loadAttendance();
@@ -96,6 +99,9 @@ function logoutStudent() {
 
   if (authBox) authBox.classList.remove('hidden');
   if (dashBox) dashBox.classList.add('hidden');
+
+  if (window.updateNavAuthState) window.updateNavAuthState();
+
   showToast('Logged out of Student Portal.');
 }
 
