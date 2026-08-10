@@ -1,0 +1,170 @@
+// ============================================================
+// ADMISSION FORM & MULTI-COURSE STATUS TRACKER
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Check URL parameters for pre-selected course & board
+  const params = new URLSearchParams(window.location.search);
+  const courseParam = params.get('course');
+  const boardParam = params.get('board');
+
+  if (courseParam) {
+    const courseSelect = document.getElementById('admCourse');
+    if (courseSelect) {
+      // Find matching option or set value
+      let matchFound = false;
+      for (let opt of courseSelect.options) {
+        if (opt.value.toLowerCase() === courseParam.toLowerCase() || courseParam.toLowerCase().includes(opt.value.toLowerCase())) {
+          courseSelect.value = opt.value;
+          matchFound = true;
+          break;
+        }
+      }
+      if (!matchFound) {
+        const newOpt = document.createElement('option');
+        newOpt.value = courseParam;
+        newOpt.textContent = courseParam;
+        newOpt.selected = true;
+        courseSelect.appendChild(newOpt);
+      }
+    }
+  }
+
+  if (boardParam) {
+    const boardInput = document.getElementById('admMsg');
+    if (boardInput && !boardInput.value) {
+      boardInput.value = `Target Board: ${boardParam}`;
+    }
+  }
+
+  // Auto-scroll to application form if URL hash contains #applyFormCard
+  if (window.location.hash === '#applyFormCard') {
+    setTimeout(() => {
+      const card = document.getElementById('applyFormCard');
+      if (card) card.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+  }
+});
+
+// Update fee calculation summary when checkboxes are toggled
+function updateMultiCourseSummary() {
+  const primaryCourse = document.getElementById('admCourse') ? document.getElementById('admCourse').value : '';
+  const addCoding = document.getElementById('addonCoding') ? document.getElementById('addonCoding').checked : false;
+  const addScience = document.getElementById('addonScience') ? document.getElementById('addonScience').checked : false;
+  const summaryBox = document.getElementById('multiCourseSummary');
+
+  if (!summaryBox) return;
+
+  let totalFee = 0;
+  let items = [];
+
+  if (primaryCourse) {
+    items.push(primaryCourse);
+    if (primaryCourse.includes('5') || primaryCourse.includes('6')) totalFee += 1500;
+    else if (primaryCourse.includes('7') || primaryCourse.includes('8')) totalFee += 2500;
+    else if (primaryCourse.includes('9') || primaryCourse.includes('10')) totalFee += 4000;
+    else if (primaryCourse.includes('11') || primaryCourse.includes('12')) totalFee += 3500;
+    else totalFee += 2000;
+  }
+
+  if (addCoding) {
+    items.push('Python Coding Specialization (+₹1,000/mo)');
+    totalFee += 1000;
+  }
+
+  if (addScience) {
+    items.push('Computer Science & Practical Booster (+₹1,500/mo)');
+    totalFee += 1500;
+  }
+
+  if (!items.length) {
+    summaryBox.innerHTML = '';
+    return;
+  }
+
+  summaryBox.innerHTML = `
+    <div style="background:rgba(255,183,3,0.06);border:1px solid rgba(255,183,3,0.3);padding:0.85rem;border-radius:var(--r-sm);" class="mt-2 mb-2">
+      <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
+        <span class="text-xs text-muted font-bold"><i class="fa-solid fa-layer-group c-gold"></i> Selected Program &amp; Add-ons:</span>
+        <span class="chip chip-purple font-bold">Total Estimated: ₹${totalFee} / mo</span>
+      </div>
+      <div class="text-sm font-bold c-gold">${items.join(' + ')}</div>
+    </div>
+  `;
+}
+window.updateMultiCourseSummary = updateMultiCourseSummary;
+
+async function handleAdmission(e) {
+  e.preventDefault();
+
+  const primaryCourse = document.getElementById('admCourse').value;
+  const addCoding = document.getElementById('addonCoding') ? document.getElementById('addonCoding').checked : false;
+  const addScience = document.getElementById('addonScience') ? document.getElementById('addonScience').checked : false;
+
+  let fullCourseList = [primaryCourse];
+  if (addCoding) fullCourseList.push('Python Coding Specialization (Add-on)');
+  if (addScience) fullCourseList.push('Computer Science / Science Booster (Add-on)');
+
+  const payload = {
+    name:               document.getElementById('admName').value.trim(),
+    email:              document.getElementById('admEmail').value.trim(),
+    phone:              document.getElementById('admPhone').value.trim(),
+    targetCourse:       fullCourseList.join(' + '),
+    previousPercentage: document.getElementById('admMarks').value || 0,
+    message:            document.getElementById('admMsg').value.trim()
+  };
+
+  const btn = e.target.querySelector('[type=submit]');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting…';
+
+  const res = await apiRequest('/admissions/apply', 'POST', payload);
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Application';
+
+  if (res.success) {
+    document.getElementById('successAppId').textContent = res.applicationId;
+    document.getElementById('admissionSuccess').classList.remove('hidden');
+    e.target.reset();
+    if (document.getElementById('multiCourseSummary')) document.getElementById('multiCourseSummary').innerHTML = '';
+    showToast('Application submitted! Reference ID: ' + res.applicationId);
+    if (window._loadAdmissionsTable) window._loadAdmissionsTable();
+  } else {
+    showToast(res.message || 'Failed to submit. Please try again.', 'error');
+  }
+}
+
+async function checkStatus() {
+  const q = document.getElementById('statusQuery').value.trim();
+  const out = document.getElementById('statusResult');
+
+  if (!q) { showToast('Please enter your Application ID or Email.', 'error'); return; }
+
+  out.innerHTML = '<p class="text-muted text-sm mt-2">Searching…</p>';
+
+  const res = await apiRequest('/admissions/status/' + encodeURIComponent(q));
+
+  if (res.success && res.application) {
+    const app = res.application;
+    const statusChip = app.status === 'Approved' ? 'chip-green' : app.status === 'Rejected' ? 'chip-red' : 'chip-amber';
+    out.innerHTML = `
+      <div class="status-result-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+          <div>
+            <div style="font-weight:700;font-size:1.05rem;">${app.name}</div>
+            <div class="text-sm text-muted">App ID: <strong>${app.applicationId}</strong> &nbsp;•&nbsp; ${app.targetCourse}</div>
+          </div>
+          <span class="chip ${statusChip}">${app.status}</span>
+        </div>
+        <div class="text-sm text-muted">Applied: ${new Date(app.appliedAt).toLocaleDateString()} &nbsp;|&nbsp; Email: ${app.email}</div>
+        ${app.status === 'Approved' ? `
+          <div class="info-tip mt-2">
+            <i class="fa-solid fa-graduation-cap"></i> <strong>Congratulations!</strong> Your Student ID is: <span style="font-family:var(--font-heading);font-size:1.1rem;font-weight:800;color:var(--cyan);">${app.studentIdAssigned}</span>. Login to the Student Portal now!
+          </div>
+        ` : app.status === 'Pending' ? `<p class="text-sm text-muted mt-2"><i class="fa-solid fa-clock c-amber"></i> Your application is under review. We'll update you soon.</p>` : `<p class="text-sm text-muted mt-2"><i class="fa-solid fa-times-circle c-red"></i> This application was not selected. Please contact us for more info.</p>`}
+      </div>`;
+  } else {
+    out.innerHTML = `<div class="status-result-card text-center"><i class="fa-solid fa-folder-open" style="font-size:2rem;color:var(--amber);margin-bottom:0.5rem;display:block;"></i><p class="text-muted text-sm">${res.message || 'No record found with the provided ID / Email.'}</p></div>`;
+  }
+}

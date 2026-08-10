@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Jigyasa Science Academy | Class 5 to 12 Board Tuition & Coding</title>
+  <meta name="description" content="Quality online tuition classes for Class 5 to 12 students (CBSE, ICSE & West Bengal Board) by Shahriyar Taufik (B.Tech ECS - KIIT). Beginner-friendly teaching from absolute basics. No prior coding background required!" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="/index.html" class="logo">
+      <div class="logo-icon"><i class="fa-solid fa-atom"></i></div>
+      <div class="logo-text">
+        <span class="logo-name">JIGYASA</span>
+        <span class="logo-tag">Science Academy</span>
+      </div>
+    </a>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a class="nav-link active" href="/index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a class="nav-link" href="#offerings"><i class="fa-solid fa-graduation-cap"></i> What We Offer</a></li>
+      <li><a class="nav-link" href="#teacher"><i class="fa-solid fa-user-ninja"></i> Lead Teacher</a></li>
+      <li><a class="nav-link" href="#notices"><i class="fa-solid fa-bullhorn"></i> Notice Board</a></li>
+      <li><a class="nav-link" href="#feedback"><i class="fa-solid fa-star"></i> Reviews</a></li>
+      <li><a class="nav-link" href="/admission.html"><i class="fa-solid fa-file-signature"></i> Courses &amp; Admission</a></li>
+    </ul>
+
+    <!-- HIGHLIGHTED PORTAL LOGIN -->
+    <div class="nav-actions">
+      <a href="/student-portal.html" class="btn btn-grad">
+        <i class="fa-solid fa-user-graduate"></i> Portal Login
+      </a>
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <a class="drawer-link active" href="/index.html"><i class="fa-solid fa-house c-gold"></i> Home</a>
+  <a class="drawer-link" href="/admission.html"><i class="fa-solid fa-file-signature c-sapphire"></i> Courses &amp; Admission</a>
+  <a class="drawer-link" href="/student-portal.html"><i class="fa-solid fa-user-graduate c-gold"></i> Portal Login</a>
+  <a class="drawer-link" href="#offerings" onclick="closeDrawer()"><i class="fa-solid fa-graduation-cap c-gold"></i> What We Offer</a>
+  <a class="drawer-link" href="#teacher" onclick="closeDrawer()"><i class="fa-solid fa-user-ninja c-cyan"></i> About Shahriyar Taufik</a>
+  <a class="drawer-link" href="#notices" onclick="closeDrawer()"><i class="fa-solid fa-bullhorn c-pink"></i> Notice Board</a>
+</div>
+
+<main>
+<!-- HERO SECTION -->
+<section id="home" class="hero">
+  <div class="hero-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="container hero-content">
+    <div class="hero-grid">
+      <div>
+        <div class="badge-pill">
+          <i class="fa-solid fa-seedling"></i> Taught From Fundamentals • Zero Prior Coding Experience Needed!
+        </div>
+
+        <h1 class="hero-title">
+          Quality Online Tuition<br/>
+          <span class="gradient-text">For Class 5 to 12 Board Students</span>
+        </h1>
+
+        <p class="hero-desc">
+          Structured academic coaching for <strong>CBSE, ICSE &amp; West Bengal Board (WBBSE / WBCHSE)</strong> in Physics, Mathematics, Science &amp; Python Coding by <strong>Shahriyar Taufik</strong> (B.Tech ECS – KIIT University). We teach everything step-by-step from absolute scratch in simple, easy-to-understand language.
+        </p>
+
+        <div class="hero-btns">
+          <a href="/student-portal.html" class="btn btn-grad btn-lg">
+            <i class="fa-solid fa-user-graduate"></i> Student Portal Login
+          </a>
+          <a href="/admission.html" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-paper-plane"></i> View Courses &amp; Apply
+          </a>
+        </div>
+
+        <!-- Dynamic Feedback Widget -->
+        <div class="feedback-widget">
+          <div class="fw-head">
+            <span class="fw-title"><i class="fa-solid fa-chart-line c-gold"></i> Live Dynamic Feedback Index</span>
+            <span class="live-badge"><span class="live-dot"></span> Real-Time</span>
+          </div>
+          <div class="fw-body">
+            <div>
+              <div class="fw-score-big" id="hwScore">4.8</div>
+              <div class="fw-stars" id="hwStars">★★★★★</div>
+              <div class="fw-count" id="hwCount">Based on student responses</div>
+            </div>
+            <div class="fw-cats">
+              <div class="fw-cat"><span class="fw-cat-label">Clarity</span><span class="fw-cat-val" id="hwClarity">5.0/5</span></div>
+              <div class="fw-cat"><span class="fw-cat-label">Material</span><span class="fw-cat-val" id="hwMaterial">4.5/5</span></div>
+              <div class="fw-cat"><span class="fw-cat-label">Support</span><span class="fw-cat-val" id="hwSupport">4.8/5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="preview-card">
+          <div class="card card-p2">
+            <div class="pc-header">
+              <div class="pc-user">
+                <div class="pc-avatar"><i class="fa-solid fa-user-graduate"></i></div>
+                <div>
+                  <div class="pc-name">Student Dashboard</div>
+                  <div class="pc-meta">studt • Class 12 Board</div>
+                </div>
+              </div>
+              <span class="chip-active">Active</span>
+            </div>
+
+            <div class="stats-mini">
+              <div class="stat-mini-card">
+                <div class="sm-label">Attendance</div>
+                <div class="sm-val c-emerald">100%</div>
+                <div class="sm-sub">25 / 25 Lectures</div>
+              </div>
+              <div class="stat-mini-card">
+                <div class="sm-label">Latest Rank</div>
+                <div class="sm-val c-gold">AIR #1</div>
+                <div class="sm-sub">99.4 Percentile</div>
+              </div>
+            </div>
+
+            <div class="pc-graph-title"><i class="fa-solid fa-chart-area c-gold"></i> Subject Score Averages</div>
+            <div class="prog-row">
+              <div class="prog-info"><span>Mathematics</span><span>96%</span></div>
+              <div class="prog-track"><div class="prog-fill" data-width="96" style="width:0"></div></div>
+            </div>
+            <div class="prog-row">
+              <div class="prog-info"><span>Physics</span><span>94%</span></div>
+              <div class="prog-track"><div class="prog-fill" data-width="94" style="width:0"></div></div>
+            </div>
+            <div class="prog-row">
+              <div class="prog-info"><span>Chemistry</span><span>88%</span></div>
+              <div class="prog-track"><div class="prog-fill" data-width="88" style="width:0"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BRIEF PROGRAM OVERVIEW & WHAT WE OFFER SECTION -->
+<section id="offerings" class="section">
+  <div class="container">
+    <div class="section-head text-center reveal">
+      <div class="section-eyebrow"><i class="fa-solid fa-star"></i> What We Offer &amp; Individual Class Tiers</div>
+      <h2 class="section-title">Individual Class Tuition &amp; Coding Programs</h2>
+      <p class="section-sub center">Tailored academic guidance for CBSE, ICSE &amp; West Bengal Board (WBBSE / WBCHSE). We teach everyone from absolute basics!</p>
+    </div>
+
+    <div class="grid g4">
+      <div class="card card-p2 reveal reveal-delay-1">
+        <div class="chip chip-purple mb-1">Class 5 &amp; 6</div>
+        <h3 class="font-heading mb-1">Middle School Core</h3>
+        <p class="text-sm text-muted mb-2">English, Hindi, Math, Science, Social Science &amp; Computer foundation. Step-by-step guidance.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹1,500 <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+
+      <div class="card card-p2 reveal reveal-delay-2">
+        <div class="chip chip-cyan mb-1">Class 7 &amp; 8</div>
+        <h3 class="font-heading mb-1">Advanced Foundation</h3>
+        <p class="text-sm text-muted mb-2">All core subjects with pre-high school prep, problem solving &amp; small batch care.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹2,500 <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+
+      <div class="card card-p2 reveal reveal-delay-3">
+        <div class="chip chip-green mb-1">Class 9 &amp; 10</div>
+        <h3 class="font-heading mb-1">Board Science &amp; Maths</h3>
+        <p class="text-sm text-muted mb-2">Physics, Chemistry, Biology &amp; Maths for CBSE, ICSE &amp; West Bengal Madhyamik.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹4,000 <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-grad btn-block btn-sm">Explore Courses</a>
+      </div>
+
+      <div class="card card-p2 reveal reveal-delay-4">
+        <div class="chip chip-amber mb-1">Class 11 &amp; 12</div>
+        <h3 class="font-heading mb-1">Board Physics &amp; Maths</h3>
+        <p class="text-sm text-muted mb-2">Calculus, Mechanics, Electrodynamics &amp; WBCHSE / CBSE / ISC Board booster.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹1,500 <span class="text-xs text-dim">/ subject</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-primary btn-block btn-sm">Explore Courses</a>
+      </div>
+    </div>
+
+    <!-- Python Coding Highlight Card (PROMOTIONAL FEATURED BANNER) -->
+    <div class="card card-p3 mt-3 reveal" style="border-color:var(--cyan);background:rgba(0,240,255,0.06);box-shadow:0 0 35px rgba(0,240,255,0.15);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <div style="display:flex;align-items:center;gap:0.6rem;" class="mb-1">
+            <span class="chip chip-cyan"><i class="fa-solid fa-code"></i> Python Coding Specialization</span>
+            <span class="chip chip-green" style="font-weight:800;"><i class="fa-solid fa-seedling"></i> NO PRIOR EXPERIENCE NEEDED!</span>
+          </div>
+          <h3 class="font-heading" style="font-size:1.5rem;font-weight:800;">Learn Programming From Absolute Scratch (Class 5 to 12)</h3>
+          <p class="text-sm text-muted mt-1" style="max-width:700px;line-height:1.6;">
+            No coding background required! We teach logic building, Python syntax, and real-world projects step-by-step in intuitive, easy-to-understand language. Perfect for beginners entering the CS &amp; AI era!
+          </p>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:1.7rem;font-weight:800;" class="c-gold">₹1,000 / month</div>
+          <div class="text-xs text-muted mb-1">2 Classes / week • Weekend Slots</div>
+          <a href="/admission.html?course=Extra%20Optional%3A%20Python%20Coding%20Specialization#applyFormCard" class="btn btn-grad btn-sm mt-1">
+            <i class="fa-solid fa-arrow-right"></i> Enroll In Python Coding
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MEET YOUR LEAD MENTOR & TEACHER SECTION -->
+<section id="teacher" class="section objectives-section">
+  <div class="container">
+    <div class="card card-p3 reveal" style="border-color:var(--gold);">
+      <div class="grid g2" style="align-items:center;">
+        <div>
+          <div class="chip chip-amber mb-1"><i class="fa-solid fa-chalkboard-user"></i> About Your Lead Teacher</div>
+          <h2 class="font-heading mb-1" style="font-size:2.2rem;font-weight:800;">Shahriyar Taufik</h2>
+          <p class="c-gold font-heading mb-2" style="font-size:1.1rem;font-weight:700;">B.Tech (ECS) — KIIT University (CGPA: 8.36)</p>
+          <p class="text-muted text-sm mb-3" style="line-height:1.7;">
+            Passionate about teaching, building strong logic, and guiding individual students from Class 5 up to Class 12 across CBSE, ICSE, and West Bengal Board (WBBSE / WBCHSE). <strong>Specializes in teaching beginners from ground-zero fundamentals with zero prior prerequisites.</strong>
+          </p>
+
+          <div class="grid g2 mb-3">
+            <div style="background:rgba(255,255,255,0.04);padding:0.9rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
+              <div class="text-xs text-muted mb-1"><i class="fa-solid fa-phone c-emerald"></i> Call / WhatsApp</div>
+              <a href="tel:8100689879" style="font-size:1.1rem;font-weight:800;" class="c-emerald">8100689879</a>
+            </div>
+            <div style="background:rgba(255,255,255,0.04);padding:0.9rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
+              <div class="text-xs text-muted mb-1"><i class="fa-solid fa-globe c-cyan"></i> Portfolio Website</div>
+              <a href="https://shahriyartaufik.in" target="_blank" style="font-size:1rem;font-weight:800;" class="c-cyan">shahriyartaufik.in</a>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+            <button type="button" class="btn btn-grad btn-sm" onclick="openQuickInquiryModal()">
+              <i class="fa-solid fa-envelope"></i> Send Email Request
+            </button>
+            <a href="/admission.html" class="btn btn-outline btn-sm"><i class="fa-solid fa-file-signature"></i> View Courses &amp; Apply</a>
+          </div>
+        </div>
+
+        <div>
+          <div class="grid g2" style="gap:1rem;">
+            <div class="card card-p2" style="background:rgba(255,183,3,0.06);border-color:rgba(255,183,3,0.3);">
+              <div class="obj-icon-wrap amber mb-1" style="width:44px;height:44px;font-size:1.2rem;"><i class="fa-solid fa-seedling"></i></div>
+              <h4 style="font-weight:800;font-size:0.95rem;" class="mb-1">From Absolute Basics</h4>
+              <p class="text-xs text-muted">Zero prior knowledge required. Taught step-by-step in easy language.</p>
+            </div>
+            <div class="card card-p2" style="background:rgba(59,130,246,0.06);border-color:rgba(59,130,246,0.3);">
+              <div class="obj-icon-wrap blue mb-1" style="width:44px;height:44px;font-size:1.2rem;"><i class="fa-solid fa-pen-nib"></i></div>
+              <h4 style="font-weight:800;font-size:0.95rem;" class="mb-1">Regular Practice</h4>
+              <p class="text-xs text-muted">Handpicked practice questions, assignments, and weekend doubt solving.</p>
+            </div>
+            <div class="card card-p2" style="background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.3);">
+              <div class="obj-icon-wrap green mb-1" style="width:44px;height:44px;font-size:1.2rem;"><i class="fa-solid fa-chart-line"></i></div>
+              <h4 style="font-weight:800;font-size:0.95rem;" class="mb-1">Performance Growth</h4>
+              <p class="text-xs text-muted">Monthly performance reports and continuous goal tracking.</p>
+            </div>
+            <div class="card card-p2" style="background:rgba(139,92,246,0.06);border-color:rgba(139,92,246,0.3);">
+              <div class="obj-icon-wrap purple mb-1" style="width:44px;height:44px;font-size:1.2rem;"><i class="fa-solid fa-user-check"></i></div>
+              <h4 style="font-weight:800;font-size:0.95rem;" class="mb-1">Personal Attention</h4>
+              <p class="text-xs text-muted">Small batch sizes ensuring every student gets individual care.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OBJECTIVES SECTION -->
+<section id="objectives" class="section">
+  <div class="container">
+    <div class="section-head text-center reveal">
+      <div class="section-eyebrow"><i class="fa-solid fa-award"></i> Mission &amp; Vision</div>
+      <h2 class="section-title">Academy Objectives &amp; Pillars</h2>
+      <p class="section-sub center">Designed for maximum academic performance with transparent tracking and mentor guidance.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card obj-card reveal reveal-delay-1">
+        <div class="obj-icon-wrap cyan"><i class="fa-solid fa-calendar-check"></i></div>
+        <h3>Transparent Attendance Reports</h3>
+        <p>Students view daily lecture attendance logs, present percentages, and topic archives directly in their dashboard.</p>
+      </div>
+      <div class="card obj-card reveal reveal-delay-2">
+        <div class="obj-icon-wrap purple"><i class="fa-solid fa-chart-column"></i></div>
+        <h3>Detailed Exam Performance Analytics</h3>
+        <p>Admin inputs scores, subject-wise marks, ranks, percentiles, and personalized mentor remarks for every assessment.</p>
+      </div>
+      <div class="card obj-card reveal reveal-delay-3">
+        <div class="obj-icon-wrap amber"><i class="fa-solid fa-lightbulb"></i></div>
+        <h3>1-on-1 Doubt Resolution Desk</h3>
+        <p>Students raise doubts anytime by topic. Admin &amp; faculty review each ticket and post step-by-step solutions.</p>
+      </div>
+      <div class="card obj-card reveal reveal-delay-1">
+        <div class="obj-icon-wrap green"><i class="fa-solid fa-chart-line"></i></div>
+        <h3>Dynamic Feedback Index</h3>
+        <p>Home screen rating index dynamically updates in real-time as students submit teaching and material ratings.</p>
+      </div>
+      <div class="card obj-card reveal reveal-delay-2">
+        <div class="obj-icon-wrap pink"><i class="fa-solid fa-id-badge"></i></div>
+        <h3>Unique Student Credentials</h3>
+        <p>Every enrolled student receives a unique Student ID (e.g. studt) ensuring secure private portal access.</p>
+      </div>
+      <div class="card obj-card reveal reveal-delay-3">
+        <div class="obj-icon-wrap blue"><i class="fa-solid fa-shield-halved"></i></div>
+        <h3>Secure Learning Management</h3>
+        <p>Cloud-based automated portal ensuring high performance, instant portal updates, and fast page loads.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NOTICE BOARD & BROADCAST ANNOUNCEMENTS -->
+<section id="notices" class="section">
+  <div class="container">
+    <div class="section-head text-center reveal">
+      <div class="section-eyebrow"><i class="fa-solid fa-bullhorn"></i> Academy Notice Board</div>
+      <h2 class="section-title">Latest Announcements &amp; Schedule Updates</h2>
+      <p class="section-sub center">Official notices regarding class schedules (7:30 PM - 10:00 PM), exams, and special Python coding sessions.</p>
+    </div>
+
+    <div class="grid g2" id="noticesContainer">
+      <p class="text-muted text-sm">Loading announcements…</p>
+    </div>
+  </div>
+</section>
+
+<!-- DYNAMIC FEEDBACK INDEX SECTION -->
+<section id="feedback" class="section feedback-section">
+  <div class="container">
+    <div class="section-head text-center reveal">
+      <div class="section-eyebrow"><i class="fa-solid fa-star-half-stroke"></i> Live Rating Metric</div>
+      <h2 class="section-title">Dynamic Feedback Index Score</h2>
+      <p class="section-sub center">This score recalculates automatically in real-time every time a registered student submits feedback from their portal.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card card-p3 reveal">
+        <div class="feedback-score-card">
+          <div class="fb-big-num" id="fbBigNum">4.8</div>
+          <div class="fb-stars" id="fbStars">★★★★★</div>
+          <div class="fb-out-of">out of 5.0 rating scale</div>
+          <div class="fb-sat-chip" id="fbSatChip"><i class="fa-solid fa-heart"></i> 96% Student Satisfaction</div>
+        </div>
+
+        <div>
+          <div class="cat-row">
+            <div class="cat-row-head"><span><i class="fa-solid fa-chalkboard-user c-gold"></i> Teaching Clarity</span><strong id="vClarity">5.0 / 5</strong></div>
+            <div class="cat-track"><div class="cat-fill" id="bClarity" style="width:0%"></div></div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-row-head"><span><i class="fa-solid fa-book c-purple"></i> Study Material</span><strong id="vMaterial">4.5 / 5</strong></div>
+            <div class="cat-track"><div class="cat-fill" id="bMaterial" style="width:0%"></div></div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-row-head"><span><i class="fa-solid fa-headset c-emerald"></i> Mentor Support</span><strong id="vSupport">4.8 / 5</strong></div>
+            <div class="cat-track"><div class="cat-fill" id="bSupport" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-p3 reveal reveal-delay-2">
+        <h3 class="mb-2"><i class="fa-solid fa-comments c-gold"></i> Recent Student Feedback Reviews</h3>
+        <div class="reviews-scroll" id="reviewsFeed">
+          <p class="text-muted text-sm">Loading feedback…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTERED STUDENTS DIRECTORY -->
+<section id="directory" class="section directory-section">
+  <div class="container">
+    <div class="section-head text-center reveal">
+      <div class="section-eyebrow"><i class="fa-solid fa-users"></i> Student Roster</div>
+      <h2 class="section-title">Registered Students Directory</h2>
+      <p class="section-sub center">Enrolled students, unique Student IDs, courses, and active enrollment status.</p>
+    </div>
+
+    <div class="card reveal">
+      <div class="table-toolbar">
+        <div class="search-wrap">
+          <i class="fa-solid fa-search"></i>
+          <input class="form-control" id="rosterSearch" type="text" placeholder="Filter by name, Student ID, or course…" oninput="filterRoster()" />
+        </div>
+        <div class="count-chip" id="rosterCount"><i class="fa-solid fa-users"></i> 0 Students</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Course</th>
+              <th>Batch</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="rosterBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- QUICK DIRECT EMAIL INQUIRY MODAL -->
+<div id="quickInquiryModal" class="modal-overlay hidden">
+  <div class="modal-box card card-p3">
+    <div class="modal-head">
+      <h3 class="font-heading"><i class="fa-solid fa-paper-plane c-gold"></i> Direct Email Inquiry to Shahriyar Taufik</h3>
+      <button class="modal-close" onclick="closeQuickInquiryModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="handleQuickInquirySubmit(event)">
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-user"></i> Your Full Name *</label>
+        <input id="inqName" class="form-control" type="text" placeholder="e.g. Student / Parent Name" required />
+      </div>
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-envelope"></i> Email Address *</label>
+          <input id="inqEmail" class="form-control" type="email" placeholder="e.g. yourname@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-phone"></i> Contact Phone *</label>
+          <input id="inqPhone" class="form-control" type="tel" placeholder="+91 98765 43210" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><i class="fa-solid fa-comment-dots"></i> Questions / Message</label>
+        <textarea id="inqMsg" class="form-control" placeholder="Ask any questions about class timings, board syllabus, or fees..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-grad btn-block btn-lg mt-1">
+        <i class="fa-solid fa-paper-plane"></i> Send Direct Email Request
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <div class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-atom"></i></div>
+        <div class="logo-text">
+          <span class="logo-name">JIGYASA</span>
+          <span class="logo-tag">Science Academy</span>
+        </div>
+      </div>
+      <p>Quality online tuition classes for Class 5 to 12 by Shahriyar Taufik (B.Tech ECS – KIIT University). Taught from absolute basics!</p>
+    </div>
+    <div class="footer-meta">
+      <span><i class="fa-solid fa-phone"></i> Call / WhatsApp: 8100689879</span>
+      <span><i class="fa-solid fa-globe"></i> shahriyartaufik.in</span>
+      <div class="footer-copy" style="margin-top:0.5rem;">&copy; 2026 Jigyasa Science Academy. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<!-- Scripts -->
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

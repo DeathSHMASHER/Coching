@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Courses &amp; Online Admission | Jigyasa Science Academy</title>
+  <meta name="description" content="Explore Class 5 to 12 Board tuition courses (CBSE, ICSE &amp; West Bengal Board), Computer Science &amp; Python Coding specializations, fee calculators, and online application desk." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="/index.html" class="logo">
+      <div class="logo-icon"><i class="fa-solid fa-atom"></i></div>
+      <div class="logo-text">
+        <span class="logo-name">JIGYASA</span>
+        <span class="logo-tag">Science Academy</span>
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a class="nav-link" href="/index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a class="nav-link active" href="/admission.html"><i class="fa-solid fa-graduation-cap"></i> Courses &amp; Admission</a></li>
+      <li><a class="nav-link" href="/student-portal.html"><i class="fa-solid fa-user-graduate"></i> Student Portal</a></li>
+    </ul>
+
+    <!-- HIGHLIGHTED PORTAL LOGIN CTA -->
+    <div class="nav-actions">
+      <a href="/student-portal.html" class="btn btn-grad">
+        <i class="fa-solid fa-user-graduate"></i> Portal Login
+      </a>
+    </div>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <a class="drawer-link" href="/index.html"><i class="fa-solid fa-house c-gold"></i> Home</a>
+  <a class="drawer-link active" href="/admission.html"><i class="fa-solid fa-graduation-cap c-sapphire"></i> Courses &amp; Admission</a>
+  <a class="drawer-link" href="/student-portal.html"><i class="fa-solid fa-user-graduate c-gold"></i> Portal Login</a>
+</div>
+
+<main>
+<!-- FULL COURSE CATALOG & ADMISSION DESK -->
+<section class="section" style="padding-top: calc(var(--nav-h) + 2.5rem);">
+  <div class="container">
+    <div class="section-head text-center">
+      <div class="section-eyebrow"><i class="fa-solid fa-graduation-cap"></i> Academic Curriculum &amp; Offerings</div>
+      <h2 class="section-title">Courses, Fees &amp; Online Admission</h2>
+      <p class="section-sub center">Structured Board tuition for Class 5 to 12 (CBSE, ICSE &amp; West Bengal Board) &amp; Python Coding Specializations by Shahriyar Taufik.</p>
+    </div>
+
+    <!-- SIMPLIFIED 2-INPUT COURSE & FEE CALCULATOR (BOARD & CLASS ONLY) -->
+    <div class="card card-p2 mb-3" style="max-width: 900px; margin: 0 auto; border-color: rgba(255,183,3,0.3);">
+      <div style="display:flex;align-items:center;gap:0.5rem;" class="mb-1">
+        <i class="fa-solid fa-calculator c-gold" style="font-size:1.2rem;"></i>
+        <h3 style="font-size:1.1rem;font-weight:800;">Interactive Course &amp; Fee Calculator</h3>
+      </div>
+      <p class="text-xs text-muted mb-2">Select your Education Board and Individual Class to view instant pricing for Regular Subjects and Computer Science.</p>
+      <div class="grid g2">
+        <div class="form-group mb-0">
+          <label class="form-label"><i class="fa-solid fa-building-columns c-gold"></i> Select Board</label>
+          <select id="calcBoard" class="form-control" onchange="calculateScienceRoadmap()">
+            <option value="">Select Education Board</option>
+            <option value="CBSE Board">CBSE Board</option>
+            <option value="ICSE Board">ICSE Board</option>
+            <option value="West Bengal Board (WBBSE / WBCHSE)">West Bengal Board (WBBSE / WBCHSE)</option>
+          </select>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label"><i class="fa-solid fa-user-graduate c-cyan"></i> Select Class</label>
+          <select id="calcGrade" class="form-control" onchange="calculateScienceRoadmap()">
+            <option value="">Select Individual Class</option>
+            <option value="Class 5">Class 5</option>
+            <option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option>
+            <option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option>
+            <option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option>
+            <option value="Class 12">Class 12</option>
+          </select>
+        </div>
+      </div>
+      <button type="button" class="btn btn-outline btn-sm mt-2" onclick="calculateScienceRoadmap()">
+        <i class="fa-solid fa-flask"></i> Calculate My Course Fee
+      </button>
+      <div id="calcResultBox" class="hidden"></div>
+    </div>
+
+    <!-- FULL DETAILED COURSE CATALOG CARDS -->
+    <div class="section-head text-center mt-3 mb-2">
+      <h3 class="font-heading" style="font-size:1.6rem;font-weight:800;"><i class="fa-solid fa-tags c-gold"></i> Complete Course Offerings (Class 5 to 12)</h3>
+    </div>
+    <div class="grid g3 mb-4" id="coursesCatalogContainer">
+      <p class="text-muted text-sm text-center">Loading course curriculum...</p>
+    </div>
+
+    <!-- ADMISSION FORM CARD WITH MULTI-COURSE SELECTION -->
+    <div class="card card-p3" style="max-width: 900px; margin: 0 auto;" id="applyFormCard">
+      <div class="tabs-wrap">
+        <div class="tabs-nav">
+          <button class="tab-btn active" onclick="switchTabEl(this,'adm-tabs','tab-apply')">
+            <i class="fa-solid fa-pen-to-square"></i> Submit Application &amp; Select Courses
+          </button>
+          <button class="tab-btn" onclick="switchTabEl(this,'adm-tabs','tab-status')">
+            <i class="fa-solid fa-magnifying-glass"></i> Track Application Status
+          </button>
+        </div>
+
+        <div id="adm-tabs">
+          <!-- Apply Tab -->
+          <div class="tab-pane active" id="tab-apply">
+            <form id="admissionForm" onsubmit="handleAdmission(event)">
+              <div class="grid g2">
+                <div class="form-group">
+                  <label class="form-label"><i class="fa-solid fa-user"></i> Full Name *</label>
+                  <input id="admName" class="form-control" type="text" placeholder="e.g. Aarav Sharma" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label"><i class="fa-solid fa-envelope"></i> Email Address *</label>
+                  <input id="admEmail" class="form-control" type="email" placeholder="e.g. aarav@example.com" required />
+                </div>
+              </div>
+
+              <div class="grid g2">
+                <div class="form-group">
+                  <label class="form-label"><i class="fa-solid fa-phone"></i> Contact Phone *</label>
+                  <input id="admPhone" class="form-control" type="tel" placeholder="+91 98765 43210" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label"><i class="fa-solid fa-book-open"></i> Primary Selected Program *</label>
+                  <select id="admCourse" class="form-control" onchange="updateMultiCourseSummary()" required>
+                    <option value="">Select Primary Program</option>
+                    <option value="Class 5 Foundation (All Core Subjects)">Class 5 Foundation (All Core Subjects)</option>
+                    <option value="Class 6 Foundation (All Core Subjects)">Class 6 Foundation (All Core Subjects)</option>
+                    <option value="Class 7 Advanced Foundation (All Core Subjects)">Class 7 Advanced Foundation (All Core Subjects)</option>
+                    <option value="Class 8 Advanced Foundation (All Core Subjects)">Class 8 Advanced Foundation (All Core Subjects)</option>
+                    <option value="Class 9 Board Science & Mathematics">Class 9 Board Science & Mathematics</option>
+                    <option value="Class 10 Board Science & Mathematics Mastery">Class 10 Board Science & Mathematics Mastery</option>
+                    <option value="Class 11 Board Physics Tuition">Class 11 Board Physics Tuition</option>
+                    <option value="Class 11 Board Mathematics Tuition">Class 11 Board Mathematics Tuition</option>
+                    <option value="Class 11 Board Physics + Mathematics Package">Class 11 Board Physics + Mathematics Package</option>
+                    <option value="Class 12 Board Physics Tuition">Class 12 Board Physics Tuition</option>
+                    <option value="Class 12 Board Mathematics Tuition">Class 12 Board Mathematics Tuition</option>
+                    <option value="Class 12 Board Physics + Mathematics Package">Class 12 Board Physics + Mathematics Package</option>
+                    <option value="Extra Optional: Python Coding Specialization">Extra Optional: Python Coding Specialization</option>
+                    <option value="Computer Science Class 9 & 10">Computer Science Class 9 & 10</option>
+                    <option value="Computer Science Class 11 & 12">Computer Science Class 11 & 12</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- MULTI-COURSE ADD-ON SELECTION -->
+              <div class="form-group mb-2" style="background:rgba(255,255,255,0.03);padding:1rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
+                <label class="form-label c-gold mb-1" style="font-weight:700;"><i class="fa-solid fa-plus-circle"></i> Add Another Course / Specialization Add-on:</label>
+                <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                  <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
+                    <input type="checkbox" id="addonCoding" onchange="updateMultiCourseSummary()" />
+                    <span>Add <strong>Python Coding Specialization</strong> (+₹1,000 / month)</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
+                    <input type="checkbox" id="addonScience" onchange="updateMultiCourseSummary()" />
+                    <span>Add <strong>Computer Science &amp; Practical Booster</strong> (+₹1,500 / month)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- DYNAMIC MULTI-COURSE SUMMARY -->
+              <div id="multiCourseSummary"></div>
+
+              <div class="grid g2">
+                <div class="form-group">
+                  <label class="form-label"><i class="fa-solid fa-percent"></i> Previous Class Score (%)</label>
+                  <input id="admMarks" class="form-control" type="number" step="0.1" min="0" max="100" placeholder="e.g. 92.5" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label"><i class="fa-solid fa-school"></i> Board &amp; Additional Notes</label>
+                  <input id="admMsg" class="form-control" type="text" placeholder="e.g. CBSE / West Bengal Board (WBBSE)" />
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-grad btn-lg mt-2">
+                <i class="fa-solid fa-paper-plane"></i> Submit Application &amp; Send Request
+              </button>
+            </form>
+
+            <div id="admissionSuccess" class="success-banner hidden">
+              <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <div>
+                <h3>Application Submitted Successfully!</h3>
+                <p>Your unique Application Reference ID is:</p>
+                <div class="app-id-highlight" id="successAppId">ADM-XXXX</div>
+                <p class="text-sm text-muted mt-1">Please save this reference ID. You can track your application status anytime using the "Track Application Status" tab.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Tab -->
+          <div class="tab-pane" id="tab-status">
+            <div class="form-group">
+              <label class="form-label"><i class="fa-solid fa-search"></i> Enter Application ID or Registered Email</label>
+              <div class="input-row">
+                <input id="statusQuery" class="form-control" type="text" placeholder="e.g. ADM-901 or aarav@example.com" />
+                <button class="btn btn-grad" onclick="checkStatus()">
+                  <i class="fa-solid fa-magnifying-glass"></i> Check Status
+                </button>
+              </div>
+            </div>
+            <div id="statusResult"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <div class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-atom"></i></div>
+        <div class="logo-text"><span class="logo-name">JIGYASA SCIENCE ACADEMY</span></div>
+      </div>
+      <p>Empowering students through personalized Board coaching (CBSE, ICSE &amp; West Bengal Board) by Shahriyar Taufik.</p>
+    </div>
+    <div class="footer-meta">
+      <span><i class="fa-solid fa-phone"></i> Call / WhatsApp: 8100689879</span>
+      <div class="footer-copy" style="margin-top:0.4rem;">&copy; 2026 Jigyasa Science Academy. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/admission.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

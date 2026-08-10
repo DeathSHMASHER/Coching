@@ -1,0 +1,36 @@
+[build]
+  command = "npm run build"
+  publish = "public"
+  functions = "functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# API Requests Redirect to Netlify Serverless Function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# Dedicated Portal HTML Rewrites
+[[redirects]]
+  from = "/admission"
+  to = "/admission.html"
+  status = 200
+
+[[redirects]]
+  from = "/student-portal"
+  to = "/student-portal.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin-portal"
+  to = "/admin-portal.html"
+  status = 200
+
+# SPA Fallback for Client-Side Navigation
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
