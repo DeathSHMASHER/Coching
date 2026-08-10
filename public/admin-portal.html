@@ -106,7 +106,7 @@
         <i class="fa-solid fa-comments"></i> Student Doubts Desk
       </button>
       <button class="tab-btn" onclick="switchTabEl(this,'adm-desk-tabs','tab-students-adm')">
-        <i class="fa-solid fa-users"></i> Enrolled Roster
+        <i class="fa-solid fa-users"></i> Enrolled Roster &amp; Passwords
       </button>
     </div>
 
@@ -176,7 +176,7 @@
                   <th>Student Info</th>
                   <th>Applied Course</th>
                   <th>Score (%)</th>
-                  <th>Status</th>
+                  <th>Status &amp; ID</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -253,12 +253,12 @@
       <!-- 4. EXAM SCORE PUBLISHER -->
       <div class="tab-pane" id="tab-perf-pub">
         <div class="card card-p3" style="max-width:800px;margin:0 auto;">
-          <h3 class="font-heading mb-2"><i class="fa-solid fa-chart-line c-gold"></i> Publish Student Exam Score Report</h3>
+          <h3 class="font-heading mb-2"><i class="fa-solid fa-chart-line c-gold"></i> Publish Student Exam Score &amp; Index Report</h3>
           <form id="perfForm" onsubmit="handleAddPerformance(event)">
             <div class="grid g2">
               <div class="form-group">
-                <label class="form-label">Student ID (e.g. studt) *</label>
-                <input id="perfStudentId" class="form-control" type="text" placeholder="e.g. studt or STU-2026-101" required />
+                <label class="form-label">Student ID (e.g. studt or STU-2026-104) *</label>
+                <input id="perfStudentId" class="form-control" type="text" placeholder="e.g. STU-2026-104" required />
               </div>
               <div class="form-group">
                 <label class="form-label">Exam / Assessment Title *</label>
@@ -293,14 +293,18 @@
                 <input id="perfMaths" class="form-control" type="number" placeholder="99" />
               </div>
             </div>
-            <div class="grid g2">
+            <div class="grid g3">
               <div class="form-group">
-                <label class="form-label">Calculated AIR Rank</label>
+                <label class="form-label">AIR / Batch Rank</label>
                 <input id="perfRank" class="form-control" type="number" value="1" />
               </div>
               <div class="form-group">
-                <label class="form-label">Calculated Percentile (%)</label>
+                <label class="form-label">Percentile (%)</label>
                 <input id="perfPercentile" class="form-control" type="number" step="0.1" value="99.4" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Class Engagement Score (0-100)</label>
+                <input id="perfParticipation" class="form-control" type="number" value="85" min="0" max="100" />
               </div>
             </div>
             <div class="form-group">
@@ -363,15 +367,15 @@
         </div>
       </div>
 
-      <!-- 7. ENROLLED ROSTER -->
+      <!-- 7. ENROLLED ROSTER & PASSWORDS -->
       <div class="tab-pane" id="tab-students-adm">
         <div class="card card-p3">
-          <h3 class="font-heading mb-2"><i class="fa-solid fa-users c-gold"></i> Enrolled Student Directory &amp; Passwords</h3>
+          <h3 class="font-heading mb-2"><i class="fa-solid fa-users c-gold"></i> Enrolled Student Directory &amp; Individual Passwords</h3>
           <div class="table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Student ID</th>
+                  <th>Student ID &amp; Password</th>
                   <th>Student Name</th>
                   <th>Enrolled Course</th>
                   <th>Fee Ledger</th>
@@ -412,6 +416,26 @@
       </div>
       <button type="submit" class="btn btn-grad btn-block btn-lg mt-1">
         <i class="fa-solid fa-floppy-disk"></i> Save New Price Live
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- RESET STUDENT PASSWORD MODAL -->
+<div id="passResetModal" class="modal-overlay hidden">
+  <div class="modal-box card card-p3">
+    <div class="modal-head">
+      <h3 class="font-heading"><i class="fa-solid fa-key c-gold"></i> Reset Individual Student Password</h3>
+      <button class="modal-close" onclick="closePassResetModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="handleSavePassReset(event)">
+      <input type="hidden" id="passResetStudentId" />
+      <div class="form-group">
+        <label class="form-label">New Custom Password *</label>
+        <input id="passResetVal" class="form-control" type="text" placeholder="Enter new password (e.g. 1234 or custom)" required />
+      </div>
+      <button type="submit" class="btn btn-grad btn-block btn-lg mt-1">
+        <i class="fa-solid fa-floppy-disk"></i> Update Password
       </button>
     </form>
   </div>

@@ -336,7 +336,7 @@ async function loadAdmissionsQueue() {
       <td class="text-sm">${a.previousPercentage ? a.previousPercentage + '%' : 'N/A'}</td>
       <td>
         <span class="chip ${a.status === 'Approved' ? 'chip-green' : a.status === 'Rejected' ? 'chip-red' : 'chip-amber'}">${a.status}</span>
-        ${a.studentIdAssigned ? `<div class="text-xs c-cyan mt-1">ID: ${a.studentIdAssigned} (pass: 1234)</div>` : ''}
+        ${a.studentIdAssigned ? `<div class="text-xs c-cyan mt-1">ID: ${a.studentIdAssigned} (Pass: 1234)</div>` : ''}
       </td>
       <td>
         <div style="display:flex;gap:0.4rem;align-items:center;">
@@ -392,6 +392,7 @@ async function handleAddPerformance(e) {
   const rank = Number(document.getElementById('perfRank').value) || 1;
   const percentile = Number(document.getElementById('perfPercentile').value) || 95;
   const remarks = document.getElementById('perfRemarks').value.trim();
+  const classParticipation = Number(document.getElementById('perfParticipation').value) || 85;
 
   if (!studentId || !examTitle || isNaN(totalScore)) {
     showToast('Student ID, Exam Title, and Total Score are required.', 'error');
@@ -407,13 +408,14 @@ async function handleAddPerformance(e) {
     subjectBreakdown: { Physics: physics, Chemistry: chemistry, Mathematics: maths },
     rank,
     percentile,
-    remarks
+    remarks,
+    classParticipation
   };
 
   const res = await apiRequest('/performance/add', 'POST', payload);
 
   if (res.success) {
-    showToast('Exam performance published to student portal!', 'success');
+    showToast('Exam performance & 100-point index published to student portal!', 'success');
     document.getElementById('perfForm').reset();
   } else {
     showToast(res.message || 'Error publishing report', 'error');
@@ -548,7 +550,7 @@ async function deleteDoubtAdmin(doubtId) {
   }
 }
 
-// ---- STUDENTS DIRECTORY & PERMANENT DELETION ----
+// ---- STUDENTS DIRECTORY, UNIQUE ID & INDIVIDUAL PASSWORD MANAGER ----
 async function loadStudentsDirectoryAdmin() {
   const body = document.getElementById('adminStudentsBody');
   if (!body) return;
@@ -562,8 +564,8 @@ async function loadStudentsDirectoryAdmin() {
   body.innerHTML = res.students.map(s => `
     <tr>
       <td>
-        <span class="chip chip-cyan">${s.studentId}</span>
-        <div class="text-xs text-dim mt-1">Pass: 1234</div>
+        <span class="chip chip-cyan" style="font-weight:800;">${s.studentId}</span>
+        <div class="text-xs c-gold mt-1" style="font-weight:700;"><i class="fa-solid fa-key"></i> Pass: ${s.password || '1234'}</div>
       </td>
       <td><div class="font-bold">${s.name}</div><div class="text-xs text-muted">${s.email}</div></td>
       <td class="text-sm">${s.course}</td>
@@ -574,14 +576,52 @@ async function loadStudentsDirectoryAdmin() {
       <td><span class="chip chip-green">${s.status}</span></td>
       <td>
         <div style="display:flex;gap:0.4rem;align-items:center;">
+          <button class="btn btn-sm btn-outline" onclick="openPassResetModal('${s.studentId}', '${s.password || '1234'}')"><i class="fa-solid fa-key"></i> Pass</button>
           <button class="btn btn-sm btn-outline" onclick="openFeeEditModal('${s.studentId}', '${s.feeStatus}', ${s.feeDueAmount || 0})">Fee</button>
           <button class="btn btn-sm btn-danger" onclick="deleteStudentAdmin('${s.studentId}')" title="Delete student record permanently">
-            <i class="fa-solid fa-trash"></i> Delete
+            <i class="fa-solid fa-trash"></i>
           </button>
         </div>
       </td>
     </tr>
   `).join('');
+}
+
+function openPassResetModal(studentId, currentPass) {
+  const idEl = document.getElementById('passResetStudentId');
+  const valEl = document.getElementById('passResetVal');
+
+  if (idEl) idEl.value = studentId;
+  if (valEl) valEl.value = currentPass || '1234';
+
+  const modal = document.getElementById('passResetModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+async function handleSavePassReset(e) {
+  e.preventDefault();
+  const studentId = document.getElementById('passResetStudentId').value;
+  const password = document.getElementById('passResetVal').value.trim();
+
+  if (!password) {
+    showToast('Please enter a valid password.', 'error');
+    return;
+  }
+
+  const res = await apiRequest(`/students/${studentId}/password`, 'PUT', { password });
+
+  if (res.success) {
+    showToast(res.message, 'success');
+    closePassResetModal();
+    loadStudentsDirectoryAdmin();
+  } else {
+    showToast(res.message || 'Error updating password', 'error');
+  }
+}
+
+function closePassResetModal() {
+  const modal = document.getElementById('passResetModal');
+  if (modal) modal.classList.add('hidden');
 }
 
 async function deleteStudentAdmin(studentId) {
@@ -652,6 +692,9 @@ window.deleteNotice                 = deleteNotice;
 window.resolveDoubtAdmin            = resolveDoubtAdmin;
 window.deleteDoubtAdmin             = deleteDoubtAdmin;
 window.deleteStudentAdmin           = deleteStudentAdmin;
+window.openPassResetModal           = openPassResetModal;
+window.handleSavePassReset          = handleSavePassReset;
+window.closePassResetModal          = closePassResetModal;
 window.openFeeEditModal             = openFeeEditModal;
 window.handleSaveFeeStatus          = handleSaveFeeStatus;
 window.closeFeeModal                = closeFeeModal;

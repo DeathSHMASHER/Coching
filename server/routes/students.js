@@ -5,7 +5,7 @@ const Student = require('../models/Student');
 const { getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
 
-// Admin / Public Directory: Get all registered students
+// Admin / Public Directory: Get all registered students with passwords for Admin
 router.get('/', async (req, res) => {
   try {
     const { useMock } = getDbState();
@@ -27,6 +27,7 @@ router.get('/', async (req, res) => {
         phone: s.phone,
         course: s.course,
         batch: s.batch,
+        password: s.password || '1234',
         status: s.status,
         feeStatus: s.feeStatus || 'Paid',
         feeDueAmount: s.feeDueAmount || 0,
@@ -63,7 +64,7 @@ router.get('/:studentId', async (req, res) => {
   }
 });
 
-// Admin: Create / Register student manually
+// Admin: Create / Register student manually with unique Student ID & Password
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, course, batch, password, feeStatus, feeDueAmount, feeDueDate } = req.body;
@@ -84,8 +85,8 @@ router.post('/', async (req, res) => {
         email,
         phone: phone || '+91 90000 00000',
         course,
-        batch: batch || 'Morning Batch Alpha',
-        password: password || 'password123',
+        batch: batch || 'Evening Batch Alpha',
+        password: password || '1234',
         admissionDate: new Date(),
         status: 'Active',
         feeStatus: feeStatus || 'Paid',
@@ -93,7 +94,7 @@ router.post('/', async (req, res) => {
         feeDueDate: feeDueDate || 'N/A'
       };
       mockData.students.unshift(newStudent);
-      return res.json({ success: true, message: 'Student registered successfully', student: newStudent });
+      return res.json({ success: true, message: `Student registered! ID: ${nextStudentId} | Password: ${newStudent.password}`, student: newStudent });
     } else {
       const count = await Student.countDocuments();
       nextStudentId = `STU-2026-${101 + count}`;
@@ -103,8 +104,8 @@ router.post('/', async (req, res) => {
         email,
         phone: phone || '+91 90000 00000',
         course,
-        batch: batch || 'Morning Batch Alpha',
-        password: password || 'password123',
+        batch: batch || 'Evening Batch Alpha',
+        password: password || '1234',
         admissionDate: new Date(),
         status: 'Active',
         feeStatus: feeStatus || 'Paid',
@@ -112,10 +113,41 @@ router.post('/', async (req, res) => {
         feeDueDate: feeDueDate || 'N/A'
       });
       await newStudent.save();
-      return res.json({ success: true, message: 'Student registered successfully', student: newStudent });
+      return res.json({ success: true, message: `Student registered! ID: ${nextStudentId} | Password: ${newStudent.password}`, student: newStudent });
     }
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error registering student' });
+    res.status(500).json({ success: false, message: 'Error registering student: ' + err.message });
+  }
+});
+
+// Admin: Reset / Update student password
+router.put('/:studentId/password', async (req, res) => {
+  try {
+    const cleanId = req.params.studentId.trim();
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Password is required.' });
+    }
+
+    const { useMock } = getDbState();
+
+    if (useMock) {
+      const stu = mockData.students.find(s => s.studentId.toLowerCase() === cleanId.toLowerCase());
+      if (!stu) return res.status(404).json({ success: false, message: 'Student not found' });
+      stu.password = password.trim();
+      return res.json({ success: true, message: `Password for ${cleanId} updated to "${stu.password}"!`, student: stu });
+    } else {
+      const stu = await Student.findOneAndUpdate(
+        { studentId: new RegExp('^' + cleanId + '$', 'i') },
+        { password: password.trim() },
+        { new: true }
+      );
+      if (!stu) return res.status(404).json({ success: false, message: 'Student not found' });
+      return res.json({ success: true, message: `Password for ${cleanId} updated to "${stu.password}"!`, student: stu });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error resetting student password: ' + err.message });
   }
 });
 
