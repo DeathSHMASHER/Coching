@@ -168,7 +168,7 @@ async function _loadAttendance() {
   }
 }
 
-// 2. EXAM PERFORMANCE & WEIGHTED COMPOSITE INDEX (OUT OF 100)
+// 2. EXAM PERFORMANCE & ANIMATED SPEEDOMETER GAUGE
 async function _loadPerformance() {
   if (!_currentStudent) return;
   const res = await apiRequest('/performance/' + _currentStudent.studentId);
@@ -184,26 +184,50 @@ async function _loadPerformance() {
   const ovIndexScore = document.getElementById('ovIndexScore');
 
   if (ovIndexScore) ovIndexScore.textContent = idx + ' / 100';
-  if (ovRank && res.reports && res.reports[0]) ovRank.textContent = 'AIR #' + res.reports[0].rank;
+  if (ovRank && res.reports && res.reports[0]) ovRank.textContent = 'Rank #' + res.reports[0].rank;
   if (ovPercentile && res.reports && res.reports[0]) ovPercentile.textContent = res.reports[0].percentile + '%';
 
-  // Render Interactive Gauge & Score Breakdown Widget
+  // Render Interactive Speedometer Gauge Widget
   const gaugeBox = document.getElementById('stuPerformanceIndexWidget');
   if (gaugeBox) {
-    const badgeChipClass = info.badgeColor === 'gold' ? 'chip-amber' : info.badgeColor === 'cyan' ? 'chip-cyan' : info.badgeColor === 'amber' ? 'chip-purple' : 'chip-red';
+    const auraClass = idx >= 90 ? 'mastery-aura' : idx >= 75 ? 'proficient-aura' : idx >= 50 ? 'developing-aura' : 'critical-aura';
+    const strokeColor = idx >= 90 ? '#10b981' : idx >= 75 ? '#00f0ff' : idx >= 50 ? '#ffb703' : '#ef4444';
+    const badgeChipClass = idx >= 90 ? 'chip-green' : idx >= 75 ? 'chip-cyan' : idx >= 50 ? 'chip-purple' : 'chip-red';
 
     gaugeBox.innerHTML = `
-      <div class="card card-p3 mb-3" style="border-color:var(--${info.badgeColor || 'gold'});background:rgba(255,255,255,0.03);">
+      <div class="speedometer-card ${auraClass} mb-3">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;" class="mb-2">
           <div>
             <div style="display:flex;align-items:center;gap:0.5rem;" class="mb-1">
-              <span class="chip ${badgeChipClass}" style="font-weight:800;font-size:0.9rem;"><i class="fa-solid fa-gauge-high"></i> ${info.statusText || 'Academic Performance Index'}</span>
+              <span class="chip ${badgeChipClass}" style="font-weight:800;font-size:0.9rem;">
+                <i class="fa-solid fa-gauge-high"></i> ${info.statusText || 'Academic Performance Index'}
+              </span>
             </div>
-            <h3 class="font-heading" style="font-size:1.6rem;font-weight:800;">Composite Performance Score</h3>
+            <h3 class="font-heading" style="font-size:1.6rem;font-weight:800;">Performance Speedometer</h3>
           </div>
           <div style="text-align:right;">
-            <div style="font-family:var(--font-heading);font-size:3rem;font-weight:800;" class="c-${info.badgeColor || 'gold'}">${idx} <span style="font-size:1rem;color:var(--text-muted);">/ 100</span></div>
+            <div class="font-heading" style="font-size:1.1rem;font-weight:700;color:var(--text-muted);">
+              Overall Index: <span id="speedoScoreNum" style="font-size:2.4rem;font-weight:800;color:${strokeColor};">0</span> / 100
+            </div>
           </div>
+        </div>
+
+        <!-- SVG SPEEDOMETER ARCHITECTURE -->
+        <div class="speedo-wrap mb-2">
+          <svg class="speedometer-svg" viewBox="0 0 280 160">
+            <!-- Background Arc (180 Degrees) -->
+            <path class="speedo-bg-arc" d="M 30 140 A 110 110 0 0 1 250 140"></path>
+
+            <!-- Animated Foreground Arc -->
+            <path id="speedoArc" class="speedo-meter-arc" stroke="${strokeColor}" d="M 30 140 A 110 110 0 0 1 250 140"></path>
+
+            <!-- Animated Needle -->
+            <g id="speedoNeedle" class="speedo-needle" style="transform: rotate(0deg);">
+              <line x1="140" y1="140" x2="45" y2="140" stroke="${strokeColor}" stroke-width="4.5" stroke-linecap="round" />
+              <circle cx="140" cy="140" r="8" fill="${strokeColor}" />
+              <circle cx="140" cy="140" r="4" fill="#040711" />
+            </g>
+          </svg>
         </div>
 
         <!-- 3 WEIGHTED METRIC BARS -->
@@ -233,10 +257,10 @@ async function _loadPerformance() {
           </div>
         </div>
 
-        <!-- ACTIONABLE IMPROVEMENT RECOMMENDATION CARD (VISIBLE IF < 95 OR CRITICAL) -->
-        <div class="card card-p2" style="border-color:var(--${info.badgeColor || 'gold'});background:rgba(0,0,0,0.2);">
-          <h4 style="font-size:1.05rem;font-weight:800;" class="mb-1 c-${info.badgeColor || 'gold'}">
-            <i class="fa-solid fa-lightbulb"></i> Personalized Mentor Analysis &amp; Action Plan
+        <!-- ACTIONABLE IMPROVEMENT RECOMMENDATION CARD -->
+        <div class="card card-p2" style="border-color:${strokeColor};background:rgba(0,0,0,0.25);">
+          <h4 style="font-size:1.05rem;font-weight:800;color:${strokeColor};" class="mb-1">
+            <i class="fa-solid fa-lightbulb"></i> Personalized Mentor Guidance &amp; Action Plan
           </h4>
           <p class="text-sm text-muted mb-2">${info.summaryMessage}</p>
 
@@ -244,7 +268,7 @@ async function _loadPerformance() {
             <div class="text-xs" style="display:flex;flex-direction:column;gap:0.45rem;">
               ${info.actionableSteps.map(step => `
                 <div style="display:flex;align-items:flex-start;gap:0.5rem;">
-                  <i class="fa-solid fa-arrow-right c-${info.badgeColor || 'gold'}" style="margin-top:2px;"></i>
+                  <i class="fa-solid fa-arrow-right" style="color:${strokeColor};margin-top:2px;"></i>
                   <span>${step}</span>
                 </div>
               `).join('')}
@@ -253,6 +277,16 @@ async function _loadPerformance() {
         </div>
       </div>
     `;
+
+    // TRIGGER SPEEDOMETER COUNT-UP & NEEDLE ROTATION ANIMATION
+    setTimeout(() => {
+      _animateSpeedometer(idx);
+    }, 200);
+
+    // SCREEN-FILLING GREEN AURA CELEBRATION FOR 90+ SCORES
+    if (idx >= 90) {
+      _launchGreenCelebration();
+    }
   }
 
   const tableBody = document.getElementById('perfHistoryBody');
@@ -271,6 +305,116 @@ async function _loadPerformance() {
       `).join('');
     }
   }
+}
+
+// SPEEDOMETER ANIMATION HELPER (COUNTS 0 TO TARGET SCORE)
+function _animateSpeedometer(targetScore) {
+  const arc = document.getElementById('speedoArc');
+  const needle = document.getElementById('speedoNeedle');
+  const scoreNum = document.getElementById('speedoScoreNum');
+
+  // Arc length offset (380 is full arc, 0 is full circle)
+  // Angle maps 0 -> 100 to 0deg -> 180deg
+  const offset = 380 - (targetScore / 100) * 340;
+  const degrees = (targetScore / 100) * 180;
+
+  if (arc) arc.style.strokeDashoffset = offset;
+  if (needle) needle.style.transform = `rotate(${degrees}deg)`;
+
+  // Count-up numbers from 0 to targetScore
+  if (scoreNum) {
+    let current = 0;
+    const duration = 1800; // ms
+    const stepTime = 20;
+    const steps = duration / stepTime;
+    const increment = targetScore / steps;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= targetScore) {
+        current = targetScore;
+        clearInterval(timer);
+      }
+      scoreNum.textContent = Math.round(current);
+    }, stepTime);
+  }
+}
+
+// SCREEN-FILLING GREEN CELEBRATION PARTICLES FOR 90+ MASTERY SCORE
+function _launchGreenCelebration() {
+  let canvas = document.getElementById('celebrationCanvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.id = 'celebrationCanvas';
+    document.body.appendChild(canvas);
+  }
+
+  const ctx = canvas.getContext('2d');
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  const particles = [];
+  const colors = ['#10b981', '#34d399', '#6ee7b7', '#ffb703', '#ffffff'];
+
+  for (let i = 0; i < 90; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height - height,
+      r: Math.random() * 6 + 2,
+      d: Math.random() * 80,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.floor(Math.random() * 10) - 10,
+      tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+      tiltAngle: 0
+    });
+  }
+
+  let animationFrame;
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      ctx.beginPath();
+      ctx.lineWidth = p.r;
+      ctx.strokeStyle = p.color;
+      ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+      ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+      ctx.stroke();
+
+      p.tiltAngle += p.tiltAngleIncremental;
+      p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+      p.tilt = Math.sin(p.tiltAngle) * 15;
+
+      if (p.y > height) {
+        particles[i] = {
+          x: Math.random() * width,
+          y: -20,
+          r: p.r,
+          d: p.d,
+          color: p.color,
+          tilt: p.tilt,
+          tiltAngleIncremental: p.tiltAngleIncremental,
+          tiltAngle: p.tiltAngle
+        };
+      }
+    }
+
+    animationFrame = requestAnimationFrame(draw);
+  }
+
+  draw();
+
+  // Automatically fade out celebration after 7 seconds
+  setTimeout(() => {
+    cancelAnimationFrame(animationFrame);
+    if (canvas) canvas.remove();
+  }, 7000);
 }
 
 // 3. DOUBT RESOLUTION DESK

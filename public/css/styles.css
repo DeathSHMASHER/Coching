@@ -802,3 +802,81 @@ textarea.form-control { resize: vertical; min-height: 115px; }
   .hero-btns { flex-direction: column; }
   .hero-btns .btn { width: 100%; }
 }
+
+/* =====================================================
+   EXCLUSIVE SPEEDOMETER GAUGE & REACTIVE CELEBRATION
+   ===================================================== */
+.speedometer-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  padding: 1.8rem;
+  background: rgba(13, 20, 36, 0.95);
+  transition: all 0.5s ease;
+}
+
+/* REACTIVE AURAS */
+.speedometer-card.mastery-aura {
+  border: 2px solid #10b981 !important;
+  box-shadow: 0 0 55px rgba(16, 185, 129, 0.5), inset 0 0 35px rgba(16, 185, 129, 0.2);
+  animation: greenAuraPulse 2.5s infinite alternate ease-in-out;
+}
+@keyframes greenAuraPulse {
+  0% { box-shadow: 0 0 35px rgba(16, 185, 129, 0.4), inset 0 0 20px rgba(16, 185, 129, 0.15); }
+  100% { box-shadow: 0 0 75px rgba(16, 185, 129, 0.75), inset 0 0 50px rgba(16, 185, 129, 0.35); }
+}
+
+.speedometer-card.proficient-aura {
+  border: 1.5px solid #00f0ff !important;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.35);
+}
+.speedometer-card.developing-aura {
+  border: 1.5px solid #ffb703 !important;
+  box-shadow: 0 0 30px rgba(255, 183, 3, 0.25);
+}
+.speedometer-card.critical-aura {
+  border: 1.5px solid #ef4444 !important;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+}
+
+/* SPEEDOMETER SVG ARC & NEEDLE */
+.speedo-wrap {
+  position: relative;
+  width: 280px;
+  height: 160px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+.speedometer-svg {
+  width: 280px;
+  height: 160px;
+}
+.speedo-bg-arc {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+.speedo-meter-arc {
+  fill: none;
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-dasharray: 380;
+  stroke-dashoffset: 380;
+  transition: stroke-dashoffset 2.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.6s ease;
+}
+.speedo-needle {
+  transform-origin: 140px 140px;
+  transition: transform 2.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* SCREEN-FILLING CELEBRATION CANVAS FOR 90+ SCORES */
+#celebrationCanvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
