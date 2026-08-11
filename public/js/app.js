@@ -271,7 +271,7 @@ function calculateScienceRoadmap() {
         <h4 style="font-size:1.15rem;font-weight:800;" class="mb-1">${regTitle}</h4>
         <p class="text-xs text-muted mb-1"><i class="fa-solid fa-seedling c-emerald"></i> <strong>Taught From Fundamentals:</strong> Beginners welcome with step-by-step guidance.</p>
         <p class="text-xs text-muted mb-2"><i class="fa-solid fa-book-open c-gold"></i> Included Subjects: <strong>${regSubjects}</strong></p>
-        <a href="/admission.html?course=${encodeURIComponent(regTitle)}&board=${encodeURIComponent(board)}#applyFormCard" class="btn btn-grad btn-sm">
+        <a href="/admission.html?course=${encodeURIComponent(regTitle)}&board=${encodeURIComponent(board)}&grade=${gradeNum}#applyFormCard" class="btn btn-grad btn-sm" onclick="applyFromCalculator(event, '${regTitle.replace(/'/g, "\\'")}', '${board.replace(/'/g, "\\'")}', ${gradeNum})">
           <i class="fa-solid fa-paper-plane"></i> Apply For ${regTitle}
         </a>
       </div>
@@ -285,7 +285,7 @@ function calculateScienceRoadmap() {
         <h4 style="font-size:1.15rem;font-weight:800;" class="mb-1">${csTitle}</h4>
         <p class="text-xs c-cyan mb-1" style="font-weight:800;"><i class="fa-solid fa-check-circle"></i> NO CODING BACKGROUND NEEDED! Taught 100% From Basics.</p>
         <p class="text-xs text-muted mb-2"><i class="fa-solid fa-laptop-code c-cyan"></i> Curriculum: <strong>${csSubjects}</strong></p>
-        <a href="/admission.html?course=${encodeURIComponent(csTitle)}&board=${encodeURIComponent(board)}#applyFormCard" class="btn btn-primary btn-sm">
+        <a href="/admission.html?course=${encodeURIComponent(csTitle)}&board=${encodeURIComponent(board)}&grade=${gradeNum}#applyFormCard" class="btn btn-primary btn-sm" onclick="applyFromCalculator(event, '${csTitle.replace(/'/g, "\\'")}', '${board.replace(/'/g, "\\'")}', ${gradeNum})">
           <i class="fa-solid fa-paper-plane"></i> Apply For Computer Science / Coding
         </a>
       </div>
@@ -293,6 +293,23 @@ function calculateScienceRoadmap() {
   `;
 }
 window.calculateScienceRoadmap = calculateScienceRoadmap;
+
+function applyFromCalculator(e, regTitle, board, gradeNum) {
+  if (e) e.preventDefault();
+  
+  sessionStorage.setItem('jigyasa_preselect_course', regTitle);
+  sessionStorage.setItem('jigyasa_preselect_board', board);
+  sessionStorage.setItem('jigyasa_preselect_grade', gradeNum);
+
+  if (window.location.pathname.includes('admission')) {
+    if (window.selectCourseAndScrollToForm) {
+      window.selectCourseAndScrollToForm(regTitle, board, gradeNum);
+    }
+  } else {
+    window.location.href = `/admission.html?course=${encodeURIComponent(regTitle)}&board=${encodeURIComponent(board)}&grade=${gradeNum}#applyFormCard`;
+  }
+}
+window.applyFromCalculator = applyFromCalculator;
 
 // ---- LOAD BROADCAST NOTICES ----
 async function _loadNotices() {

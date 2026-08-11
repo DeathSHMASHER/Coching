@@ -3,38 +3,13 @@
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Check URL parameters for pre-selected course & board
   const params = new URLSearchParams(window.location.search);
-  const courseParam = params.get('course');
-  const boardParam = params.get('board');
+  const courseParam = params.get('course') || sessionStorage.getItem('jigyasa_preselect_course');
+  const boardParam = params.get('board') || sessionStorage.getItem('jigyasa_preselect_board');
+  const gradeParam = params.get('grade') || sessionStorage.getItem('jigyasa_preselect_grade');
 
-  if (courseParam) {
-    const courseSelect = document.getElementById('admCourse');
-    if (courseSelect) {
-      // Find matching option or set value
-      let matchFound = false;
-      for (let opt of courseSelect.options) {
-        if (opt.value.toLowerCase() === courseParam.toLowerCase() || courseParam.toLowerCase().includes(opt.value.toLowerCase())) {
-          courseSelect.value = opt.value;
-          matchFound = true;
-          break;
-        }
-      }
-      if (!matchFound) {
-        const newOpt = document.createElement('option');
-        newOpt.value = courseParam;
-        newOpt.textContent = courseParam;
-        newOpt.selected = true;
-        courseSelect.appendChild(newOpt);
-      }
-    }
-  }
-
-  if (boardParam) {
-    const boardInput = document.getElementById('admMsg');
-    if (boardInput && !boardInput.value) {
-      boardInput.value = `Target Board: ${boardParam}`;
-    }
+  if (courseParam || boardParam || gradeParam) {
+    selectCourseAndScrollToForm(courseParam, boardParam, gradeParam ? parseInt(gradeParam, 10) : null);
   }
 
   // Auto-scroll to application form if URL hash contains #applyFormCard
@@ -205,18 +180,46 @@ async function handleAdmission(e) {
   }
 }
 
-function selectCourseAndScrollToForm(course, board) {
+function selectCourseAndScrollToForm(course, board, gradeNum) {
+  if (course) sessionStorage.setItem('jigyasa_preselect_course', course);
+  if (board) sessionStorage.setItem('jigyasa_preselect_board', board);
+  if (gradeNum) sessionStorage.setItem('jigyasa_preselect_grade', gradeNum);
+
   const courseSelect = document.getElementById('admCourse');
-  if (courseSelect && course) {
-    let matchFound = false;
-    for (let opt of courseSelect.options) {
-      if (opt.value.toLowerCase() === course.toLowerCase() || course.toLowerCase().includes(opt.value.toLowerCase())) {
-        courseSelect.value = opt.value;
-        matchFound = true;
-        break;
+  if (courseSelect) {
+    let targetGradeStr = gradeNum ? `Class ${gradeNum}` : '';
+    if (!targetGradeStr && course) {
+      const match = course.match(/Class\s*(\d+)/i);
+      if (match) targetGradeStr = `Class ${match[1]}`;
+    }
+
+    let matchedOptValue = '';
+    
+    // Priority 1: Match option containing "Class X"
+    if (targetGradeStr) {
+      for (let opt of courseSelect.options) {
+        if (opt.value.includes(targetGradeStr)) {
+          matchedOptValue = opt.value;
+          break;
+        }
       }
     }
-    if (!matchFound) {
+
+    // Priority 2: Fuzzy keyword match
+    if (!matchedOptValue && course) {
+      const cLower = course.toLowerCase();
+      for (let opt of courseSelect.options) {
+        const oLower = opt.value.toLowerCase();
+        if (oLower === cLower || cLower.includes(oLower) || oLower.includes(cLower)) {
+          matchedOptValue = opt.value;
+          break;
+        }
+      }
+    }
+
+    if (matchedOptValue) {
+      courseSelect.value = matchedOptValue;
+    } else if (course) {
       const newOpt = document.createElement('option');
       newOpt.value = course;
       newOpt.textContent = course;
@@ -230,13 +233,37 @@ function selectCourseAndScrollToForm(course, board) {
     if (boardInput) boardInput.value = `Target Board: ${board}`;
   }
 
+  // Auto check checkboxes based on grade or course type
+  const gNum = gradeNum || (course ? parseInt((course.match(/Class\s*(\d+)/i) || [])[1], 10) : null);
+  
+  if (gNum === 11 || gNum === 12) {
+    const phys = document.getElementById('subjectPhysics');
+    const chem = document.getElementById('subjectChemistry');
+    if (phys) phys.checked = true;
+    if (chem) chem.checked = true;
+    if (course && (course.toLowerCase().includes('computer') || course.toLowerCase().includes('coding'))) {
+      const coding11 = document.getElementById('addonCoding11');
+      if (coding11) coding11.checked = true;
+    }
+  } else if (gNum === 9 || gNum === 10) {
+    if (course && (course.toLowerCase().includes('computer') || course.toLowerCase().includes('coding'))) {
+      const coding9 = document.getElementById('addonCoding9');
+      if (coding9) coding9.checked = true;
+    }
+  } else if (gNum >= 5 && gNum <= 8) {
+    if (course && (course.toLowerCase().includes('python') || course.toLowerCase().includes('coding'))) {
+      const coding = document.getElementById('addonCoding');
+      if (coding) coding.checked = true;
+    }
+  }
+
   if (window.updateMultiCourseSummary) window.updateMultiCourseSummary();
 
   const card = document.getElementById('applyFormCard');
   if (card) {
     card.scrollIntoView({ behavior: 'smooth' });
     const nameInp = document.getElementById('admName');
-    if (nameInp) setTimeout(() => nameInp.focus(), 500);
+    if (nameInp) setTimeout(() => nameInp.focus(), 400);
   }
 }
 window.selectCourseAndScrollToForm = selectCourseAndScrollToForm;
