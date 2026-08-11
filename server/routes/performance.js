@@ -153,6 +153,7 @@ router.post('/add', async (req, res) => {
     const perfPayload = {
       studentId: cleanId,
       examTitle,
+      batch: req.body.batch || 'General Batch',
       date: date || new Date().toISOString().split('T')[0],
       totalScore: Number(totalScore),
       maxMarks: Number(maxMarks) || 100,
@@ -163,13 +164,15 @@ router.post('/add', async (req, res) => {
     };
 
     if (useMock) {
+      perfPayload._id = 'perf_' + Date.now();
       mockData.performance.unshift(perfPayload);
       if (classParticipation !== undefined) {
         const s = (mockData.students || []).find(st => st.studentId.toUpperCase() === cleanId);
         if (s) s.classParticipation = Number(classParticipation);
       }
     } else {
-      await Performance.create(perfPayload);
+      const created = await Performance.create(perfPayload);
+      perfPayload._id = created._id;
       if (classParticipation !== undefined) {
         await Student.updateOne({ studentId: new RegExp('^' + cleanId + '$', 'i') }, { classParticipation: Number(classParticipation) });
       }
@@ -181,4 +184,108 @@ router.post('/add', async (req, res) => {
   }
 });
 
+// Admin: Get all performance reports
+router.get('/all/reports', async (req, res) => {
+  try {
+    const { useMock } = getDbState();
+    let reports = [];
+    if (useMock) {
+      reports = mockData.performance || [];
+    } else {
+      reports = await Performance.find({}).sort({ date: -1 });
+    }
+    return res.json({ success: true, reports });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error fetching performance reports: ' + err.message });
+  }
+});
+
+// Admin: Update performance report
+router.put('/:reportId', async (req, res) => {
+  try {
+    const reportId = req.params.reportId;
+    const { useMock } = getDbState();
+    const {
+      studentId,
+      examTitle,
+      batch,
+      date,
+      totalScore,
+      maxMarks,
+      subjectBreakdown,
+      rank,
+      percentile,
+      remarks,
+      classParticipation
+    } = req.body;
+
+    const cleanId = studentId ? studentId.trim().toUpperCase() : '';
+
+    if (useMock) {
+      const index = mockData.performance.findIndex(p => p._id === reportId || p.reportId === reportId);
+      if (index !== -1) {
+        mockData.performance[index] = {
+          ...mockData.performance[index],
+          studentId: cleanId || mockData.performance[index].studentId,
+          examTitle: examTitle || mockData.performance[index].examTitle,
+          batch: batch || mockData.performance[index].batch,
+          date: date || mockData.performance[index].date,
+          totalScore: Number(totalScore),
+          maxMarks: Number(maxMarks) || 100,
+          subjectBreakdown: subjectBreakdown || mockData.performance[index].subjectBreakdown,
+          rank: Number(rank) || 1,
+          percentile: Number(percentile) || 95.0,
+          remarks: remarks || ''
+        };
+      }
+      if (cleanId && classParticipation !== undefined) {
+        const s = (mockData.students || []).find(st => st.studentId.toUpperCase() === cleanId);
+        if (s) s.classParticipation = Number(classParticipation);
+      }
+    } else {
+      await Performance.findByIdAndUpdate(reportId, {
+        studentId: cleanId,
+        examTitle,
+        batch,
+        date,
+        totalScore: Number(totalScore),
+        maxMarks: Number(maxMarks) || 100,
+        subjectBreakdown,
+        rank: Number(rank) || 1,
+        percentile: Number(percentile) || 95.0,
+        remarks
+      });
+      if (cleanId && classParticipation !== undefined) {
+        await Student.updateOne({ studentId: new RegExp('^' + cleanId + '$', 'i') }, { classParticipation: Number(classParticipation) });
+      }
+    }
+
+    return res.json({ success: true, message: 'Performance report updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error updating performance report: ' + err.message });
+  }
+});
+
+// Admin: Delete performance report
+router.delete('/:reportId', async (req, res) => {
+  try {
+    const reportId = req.params.reportId;
+    const { useMock } = getDbState();
+
+    if (useMock) {
+      const idx = mockData.performance.findIndex(p => p._id === reportId || p.reportId === reportId);
+      if (idx !== -1) {
+        mockData.performance.splice(idx, 1);
+      }
+    } else {
+      await Performance.findByIdAndDelete(reportId);
+    }
+
+    return res.json({ success: true, message: 'Performance report deleted successfully!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error deleting performance report: ' + err.message });
+  }
+});
+
 module.exports = router;
+

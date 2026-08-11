@@ -78,6 +78,25 @@
         </button>
       </form>
     </div>
+
+    <!-- TRACK APPLICATION STATUS CARD ON PORTAL LOGIN PAGE -->
+    <div class="card card-p3 mt-3">
+      <div class="mb-2 text-center">
+        <h3 class="font-heading mb-1" style="font-size:1.25rem;font-weight:800;"><i class="fa-solid fa-magnifying-glass c-gold"></i> Track Online Application Status</h3>
+        <p class="text-xs text-muted">Applied recently? Enter your Application Reference ID (e.g. ADM-901) or Email to check status and retrieve your credentials.</p>
+      </div>
+
+      <div class="form-group mb-1">
+        <label class="form-label"><i class="fa-solid fa-search"></i> Application ID or Registered Email *</label>
+        <div class="input-row">
+          <input id="portalStatusQuery" class="form-control" type="text" placeholder="e.g. ADM-901 or your email" />
+          <button class="btn btn-grad" onclick="checkStatus()">
+            <i class="fa-solid fa-magnifying-glass"></i> Check
+          </button>
+        </div>
+      </div>
+      <div id="portalStatusResult"></div>
+    </div>
   </div>
 </div>
 
@@ -95,7 +114,10 @@
         </div>
       </div>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="logoutStudent()"><i class="fa-solid fa-right-from-bracket"></i> Exit Portal</button>
+    <div class="dash-actions-row">
+      <button class="btn btn-outline btn-sm" onclick="refreshStudentData()"><i class="fa-solid fa-rotate"></i> Refresh Data</button>
+      <button class="btn btn-ghost btn-sm" onclick="logoutStudent()"><i class="fa-solid fa-right-from-bracket"></i> Exit Portal</button>
+    </div>
   </div>
 
   <!-- UPCOMING LIVE CLASS MEETING LINKS WIDGET -->

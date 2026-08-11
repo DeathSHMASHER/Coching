@@ -115,6 +115,7 @@ router.put('/:id/status', async (req, res) => {
     const { useMock } = getDbState();
     let updatedApp = null;
     let assignedId = '';
+    let uniquePassword = '';
 
     if (useMock) {
       updatedApp = mockData.admissions.find(a => a.applicationId.toUpperCase() === appId);
@@ -122,27 +123,43 @@ router.put('/:id/status', async (req, res) => {
 
       updatedApp.status = status;
 
-      if (status === 'Approved' && !updatedApp.studentIdAssigned) {
-        const studentCount = mockData.students.length;
-        assignedId = `STU-2026-${101 + studentCount}`;
-        updatedApp.studentIdAssigned = assignedId;
+      if (status === 'Approved') {
+        if (!updatedApp.studentIdAssigned) {
+          const studentCount = mockData.students.length;
+          assignedId = `STU-2026-${101 + studentCount}`;
+          updatedApp.studentIdAssigned = assignedId;
+        } else {
+          assignedId = updatedApp.studentIdAssigned;
+        }
 
-        // Auto create student account
-        mockData.students.unshift({
-          _id: 'stu_' + Date.now(),
-          studentId: assignedId,
-          name: updatedApp.name,
-          email: updatedApp.email,
-          phone: updatedApp.phone,
-          course: updatedApp.targetCourse,
-          batch: 'Morning Batch Alpha',
-          password: 'password123',
-          admissionDate: new Date(),
-          status: 'Active',
-          feeStatus: 'Paid',
-          feeDueAmount: 0,
-          feeDueDate: 'N/A'
-        });
+        if (!updatedApp.assignedPassword) {
+          uniquePassword = 'JIG#' + Math.floor(1000 + Math.random() * 9000);
+          updatedApp.assignedPassword = uniquePassword;
+        } else {
+          uniquePassword = updatedApp.assignedPassword;
+        }
+
+        // Auto create or sync student account with unique password
+        let existingStu = mockData.students.find(s => s.studentId === assignedId);
+        if (!existingStu) {
+          mockData.students.unshift({
+            _id: 'stu_' + Date.now(),
+            studentId: assignedId,
+            name: updatedApp.name,
+            email: updatedApp.email,
+            phone: updatedApp.phone,
+            course: updatedApp.targetCourse,
+            batch: 'Morning Batch Alpha',
+            password: uniquePassword,
+            admissionDate: new Date(),
+            status: 'Active',
+            feeStatus: 'Paid',
+            feeDueAmount: 0,
+            feeDueDate: 'N/A'
+          });
+        } else {
+          existingStu.password = uniquePassword;
+        }
       }
     } else {
       updatedApp = await Admission.findOne({ applicationId: appId });
@@ -150,35 +167,57 @@ router.put('/:id/status', async (req, res) => {
 
       updatedApp.status = status;
 
-      if (status === 'Approved' && !updatedApp.studentIdAssigned) {
-        const studentCount = await Student.countDocuments();
-        assignedId = `STU-2026-${101 + studentCount}`;
-        updatedApp.studentIdAssigned = assignedId;
+      if (status === 'Approved') {
+        if (!updatedApp.studentIdAssigned) {
+          const studentCount = await Student.countDocuments();
+          assignedId = `STU-2026-${101 + studentCount}`;
+          updatedApp.studentIdAssigned = assignedId;
+        } else {
+          assignedId = updatedApp.studentIdAssigned;
+        }
 
-        const newStudent = new Student({
-          studentId: assignedId,
-          name: updatedApp.name,
-          email: updatedApp.email,
-          phone: updatedApp.phone,
-          course: updatedApp.targetCourse,
-          batch: 'Morning Batch Alpha',
-          password: 'password123',
-          admissionDate: new Date(),
-          status: 'Active',
-          feeStatus: 'Paid',
-          feeDueAmount: 0,
-          feeDueDate: 'N/A'
-        });
-        await newStudent.save();
+        if (!updatedApp.assignedPassword) {
+          uniquePassword = 'JIG#' + Math.floor(1000 + Math.random() * 9000);
+          updatedApp.assignedPassword = uniquePassword;
+        } else {
+          uniquePassword = updatedApp.assignedPassword;
+        }
+
+        let existingStu = await Student.findOne({ studentId: assignedId });
+        if (!existingStu) {
+          const newStudent = new Student({
+            studentId: assignedId,
+            name: updatedApp.name,
+            email: updatedApp.email,
+            phone: updatedApp.phone,
+            course: updatedApp.targetCourse,
+            batch: 'Morning Batch Alpha',
+            password: uniquePassword,
+            admissionDate: new Date(),
+            status: 'Active',
+            feeStatus: 'Paid',
+            feeDueAmount: 0,
+            feeDueDate: 'N/A'
+          });
+          await newStudent.save();
+        } else {
+          existingStu.password = uniquePassword;
+          await existingStu.save();
+        }
       }
 
       await updatedApp.save();
     }
 
+    if (status === 'Approved') {
+      console.log(`[Gmail Service] Forwarded student credentials email to ${updatedApp.email}: Student ID: ${assignedId} | Password: ${uniquePassword}`);
+    }
+
     return res.json({
       success: true,
       message: `Application ${appId} marked as ${status}`,
-      assignedStudentId: assignedId || updatedApp.studentIdAssigned
+      assignedStudentId: assignedId || updatedApp.studentIdAssigned,
+      assignedPassword: uniquePassword || updatedApp.assignedPassword
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error processing application status' });

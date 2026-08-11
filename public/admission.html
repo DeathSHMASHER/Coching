@@ -107,121 +107,118 @@
       <p class="text-muted text-sm text-center">Loading course curriculum...</p>
     </div>
 
-    <!-- ADMISSION FORM CARD WITH MULTI-COURSE SELECTION -->
-    <div class="card card-p3" style="max-width: 900px; margin: 0 auto;" id="applyFormCard">
-      <div class="tabs-wrap">
-        <div class="tabs-nav">
-          <button class="tab-btn active" onclick="switchTabEl(this,'adm-tabs','tab-apply')">
-            <i class="fa-solid fa-pen-to-square"></i> Submit Application &amp; Select Courses
-          </button>
-          <button class="tab-btn" onclick="switchTabEl(this,'adm-tabs','tab-status')">
-            <i class="fa-solid fa-magnifying-glass"></i> Track Application Status
-          </button>
+    <div class="separate-adm-section">
+      <!-- 1. ONLINE ADMISSION APPLICATION CARD -->
+      <div class="card card-p3" style="max-width: 900px; margin: 0 auto;" id="applyFormCard">
+        <div class="mb-3">
+          <h3 class="font-heading mb-1" style="font-size:1.4rem;font-weight:800;"><i class="fa-solid fa-pen-to-square c-gold"></i> Submit Online Application &amp; Select Courses</h3>
+          <p class="text-xs text-muted">Fill in your details below to submit your admission request directly to Shahriyar Taufik.</p>
         </div>
 
-        <div id="adm-tabs">
-          <!-- Apply Tab -->
-          <div class="tab-pane active" id="tab-apply">
-            <form id="admissionForm" onsubmit="handleAdmission(event)">
-              <div class="grid g2">
-                <div class="form-group">
-                  <label class="form-label"><i class="fa-solid fa-user"></i> Full Name *</label>
-                  <input id="admName" class="form-control" type="text" placeholder="e.g. Aarav Sharma" required />
-                </div>
-                <div class="form-group">
-                  <label class="form-label"><i class="fa-solid fa-envelope"></i> Email Address *</label>
-                  <input id="admEmail" class="form-control" type="email" placeholder="e.g. aarav@example.com" required />
-                </div>
-              </div>
-
-              <div class="grid g2">
-                <div class="form-group">
-                  <label class="form-label"><i class="fa-solid fa-phone"></i> Contact Phone *</label>
-                  <input id="admPhone" class="form-control" type="tel" placeholder="+91 98765 43210" required />
-                </div>
-                <div class="form-group">
-                  <label class="form-label"><i class="fa-solid fa-book-open"></i> Primary Selected Program *</label>
-                  <select id="admCourse" class="form-control" onchange="updateMultiCourseSummary()" required>
-                    <option value="">Select Primary Program</option>
-                    <option value="Class 5 Foundation (All Core Subjects)">Class 5 Foundation (All Core Subjects)</option>
-                    <option value="Class 6 Foundation (All Core Subjects)">Class 6 Foundation (All Core Subjects)</option>
-                    <option value="Class 7 Advanced Foundation (All Core Subjects)">Class 7 Advanced Foundation (All Core Subjects)</option>
-                    <option value="Class 8 Advanced Foundation (All Core Subjects)">Class 8 Advanced Foundation (All Core Subjects)</option>
-                    <option value="Class 9 Board Science & Mathematics">Class 9 Board Science & Mathematics</option>
-                    <option value="Class 10 Board Science & Mathematics Mastery">Class 10 Board Science & Mathematics Mastery</option>
-                    <option value="Class 11 Board Physics Tuition">Class 11 Board Physics Tuition</option>
-                    <option value="Class 11 Board Mathematics Tuition">Class 11 Board Mathematics Tuition</option>
-                    <option value="Class 11 Board Physics + Mathematics Package">Class 11 Board Physics + Mathematics Package</option>
-                    <option value="Class 12 Board Physics Tuition">Class 12 Board Physics Tuition</option>
-                    <option value="Class 12 Board Mathematics Tuition">Class 12 Board Mathematics Tuition</option>
-                    <option value="Class 12 Board Physics + Mathematics Package">Class 12 Board Physics + Mathematics Package</option>
-                    <option value="Extra Optional: Python Coding Specialization">Extra Optional: Python Coding Specialization</option>
-                    <option value="Computer Science Class 9 & 10">Computer Science Class 9 & 10</option>
-                    <option value="Computer Science Class 11 & 12">Computer Science Class 11 & 12</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- MULTI-COURSE ADD-ON SELECTION -->
-              <div class="form-group mb-2" style="background:rgba(255,255,255,0.03);padding:1rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
-                <label class="form-label c-gold mb-1" style="font-weight:700;"><i class="fa-solid fa-plus-circle"></i> Add Another Course / Specialization Add-on:</label>
-                <div style="display:flex;flex-direction:column;gap:0.6rem;">
-                  <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
-                    <input type="checkbox" id="addonCoding" onchange="updateMultiCourseSummary()" />
-                    <span>Add <strong>Python Coding Specialization</strong> (+₹1,000 / month)</span>
-                  </label>
-                  <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
-                    <input type="checkbox" id="addonScience" onchange="updateMultiCourseSummary()" />
-                    <span>Add <strong>Computer Science &amp; Practical Booster</strong> (+₹1,500 / month)</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- DYNAMIC MULTI-COURSE SUMMARY -->
-              <div id="multiCourseSummary"></div>
-
-              <div class="grid g2">
-                <div class="form-group">
-                  <label class="form-label"><i class="fa-solid fa-percent"></i> Previous Class Score (%)</label>
-                  <input id="admMarks" class="form-control" type="number" step="0.1" min="0" max="100" placeholder="e.g. 92.5" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label"><i class="fa-solid fa-school"></i> Board &amp; Additional Notes</label>
-                  <input id="admMsg" class="form-control" type="text" placeholder="e.g. CBSE / West Bengal Board (WBBSE)" />
-                </div>
-              </div>
-
-              <button type="submit" class="btn btn-grad btn-lg mt-2">
-                <i class="fa-solid fa-paper-plane"></i> Submit Application &amp; Send Request
-              </button>
-            </form>
-
-            <div id="admissionSuccess" class="success-banner hidden">
-              <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
-              <div>
-                <h3>Application Submitted Successfully!</h3>
-                <p>Your unique Application Reference ID is:</p>
-                <div class="app-id-highlight" id="successAppId">ADM-XXXX</div>
-                <p class="text-sm text-muted mt-1">Please save this reference ID. You can track your application status anytime using the "Track Application Status" tab.</p>
-              </div>
+        <form id="admissionForm" onsubmit="handleAdmission(event)">
+          <div class="grid g2">
+            <div class="form-group">
+              <label class="form-label"><i class="fa-solid fa-user"></i> Full Name *</label>
+              <input id="admName" class="form-control" type="text" placeholder="e.g. Aarav Sharma" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="fa-solid fa-envelope"></i> Email Address *</label>
+              <input id="admEmail" class="form-control" type="email" placeholder="e.g. aarav@example.com" required />
             </div>
           </div>
 
-          <!-- Status Tab -->
-          <div class="tab-pane" id="tab-status">
+          <div class="grid g2">
             <div class="form-group">
-              <label class="form-label"><i class="fa-solid fa-search"></i> Enter Application ID or Registered Email</label>
-              <div class="input-row">
-                <input id="statusQuery" class="form-control" type="text" placeholder="e.g. ADM-901 or aarav@example.com" />
-                <button class="btn btn-grad" onclick="checkStatus()">
-                  <i class="fa-solid fa-magnifying-glass"></i> Check Status
-                </button>
-              </div>
+              <label class="form-label"><i class="fa-solid fa-phone"></i> Contact Phone *</label>
+              <input id="admPhone" class="form-control" type="tel" placeholder="+91 98765 43210" required />
             </div>
-            <div id="statusResult"></div>
+            <div class="form-group">
+              <label class="form-label"><i class="fa-solid fa-book-open"></i> Primary Selected Program *</label>
+              <select id="admCourse" class="form-control" onchange="updateMultiCourseSummary()" required>
+                <option value="">Select Primary Program</option>
+                <option value="Class 5 Foundation (All Core Subjects)">Class 5 Foundation (All Core Subjects)</option>
+                <option value="Class 6 Foundation (All Core Subjects)">Class 6 Foundation (All Core Subjects)</option>
+                <option value="Class 7 Advanced Foundation (All Core Subjects)">Class 7 Advanced Foundation (All Core Subjects)</option>
+                <option value="Class 8 Advanced Foundation (All Core Subjects)">Class 8 Advanced Foundation (All Core Subjects)</option>
+                <option value="Class 9 Board Science & Mathematics">Class 9 Board Science & Mathematics</option>
+                <option value="Class 10 Board Science & Mathematics Mastery">Class 10 Board Science & Mathematics Mastery</option>
+                <option value="Class 11 Board Physics Tuition">Class 11 Board Physics Tuition</option>
+                <option value="Class 11 Board Mathematics Tuition">Class 11 Board Mathematics Tuition</option>
+                <option value="Class 11 Board Physics + Mathematics Package">Class 11 Board Physics + Mathematics Package</option>
+                <option value="Class 12 Board Physics Tuition">Class 12 Board Physics Tuition</option>
+                <option value="Class 12 Board Mathematics Tuition">Class 12 Board Mathematics Tuition</option>
+                <option value="Class 12 Board Physics + Mathematics Package">Class 12 Board Physics + Mathematics Package</option>
+                <option value="Extra Optional: Python Coding Specialization">Extra Optional: Python Coding Specialization</option>
+                <option value="Computer Science Class 9 & 10">Computer Science Class 9 & 10</option>
+                <option value="Computer Science Class 11 & 12">Computer Science Class 11 & 12</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- MULTI-COURSE ADD-ON SELECTION -->
+          <div class="form-group mb-2" style="background:rgba(255,255,255,0.03);padding:1rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
+            <label class="form-label c-gold mb-1" style="font-weight:700;"><i class="fa-solid fa-plus-circle"></i> Add Another Course / Specialization Add-on:</label>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+              <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
+                <input type="checkbox" id="addonCoding" onchange="updateMultiCourseSummary()" />
+                <span>Add <strong>Python Coding Specialization</strong> (+₹1,000 / month)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
+                <input type="checkbox" id="addonScience" onchange="updateMultiCourseSummary()" />
+                <span>Add <strong>Computer Science &amp; Practical Booster</strong> (+₹1,500 / month)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- DYNAMIC MULTI-COURSE SUMMARY -->
+          <div id="multiCourseSummary"></div>
+
+          <div class="grid g2">
+            <div class="form-group">
+              <label class="form-label"><i class="fa-solid fa-percent"></i> Previous Class Score (%)</label>
+              <input id="admMarks" class="form-control" type="number" step="0.1" min="0" max="100" placeholder="e.g. 92.5" />
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="fa-solid fa-school"></i> Board &amp; Additional Notes</label>
+              <input id="admMsg" class="form-control" type="text" placeholder="e.g. CBSE / West Bengal Board (WBBSE)" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-grad btn-lg mt-2">
+            <i class="fa-solid fa-paper-plane"></i> Submit Application &amp; Send Request
+          </button>
+        </form>
+
+        <div id="admissionSuccess" class="success-banner hidden">
+          <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <h3>Application Submitted Successfully!</h3>
+            <p>Your unique Application Reference ID is:</p>
+            <div class="app-id-highlight" id="successAppId">ADM-XXXX</div>
+            <p class="text-sm text-muted mt-1">Please save this reference ID. You can track your application status anytime using the tracking card below.</p>
           </div>
         </div>
       </div>
+
+      <!-- 2. SEPARATE TRACK APPLICATION STATUS CARD -->
+      <div class="card card-p3" style="max-width: 900px; margin: 0 auto;" id="trackStatusCard">
+        <div class="mb-2">
+          <h3 class="font-heading mb-1" style="font-size:1.4rem;font-weight:800;"><i class="fa-solid fa-magnifying-glass c-gold"></i> Track Application Status</h3>
+          <p class="text-xs text-muted">Enter your unique Application Reference ID (e.g. ADM-901) or registered email address to check status live.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-search"></i> Application ID or Registered Email *</label>
+          <div class="input-row">
+            <input id="statusQuery" class="form-control" type="text" placeholder="e.g. ADM-901 or aarav@example.com" />
+            <button class="btn btn-grad" onclick="checkStatus()">
+              <i class="fa-solid fa-magnifying-glass"></i> Check Status
+            </button>
+          </div>
+        </div>
+        <div id="statusResult"></div>
+      </div>
+    </div>
     </div>
   </div>
 </section>

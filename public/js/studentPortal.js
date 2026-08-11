@@ -488,7 +488,16 @@ async function _loadStudentFeeLedger() {
   }
 }
 
+async function refreshStudentData() {
+  if (!_currentStudent) return;
+  showToast('Refreshing student portal data...', 'info');
+  await _renderStudentDash();
+  showToast('Student portal updated!', 'success');
+}
+
 // Global Exports
 window.handleStudentLogin  = handleStudentLogin;
 window.logoutStudent       = logoutStudent;
 window.handleRaiseDoubt     = handleRaiseDoubt;
+window.refreshStudentData  = refreshStudentData;
+

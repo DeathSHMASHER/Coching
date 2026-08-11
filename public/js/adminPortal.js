@@ -66,6 +66,14 @@ function unlockAdminDesk() {
   loadStudentsDirectoryAdmin();
   loadNoticesAdmin();
   loadDoubtsAdmin();
+  onPerfBatchChange();
+  loadAllPerformanceReportsAdmin();
+}
+
+async function refreshAdminData() {
+  showToast('Refreshing Director Desk data...', 'info');
+  unlockAdminDesk();
+  showToast('Director Desk updated!', 'success');
 }
 
 function logoutAdmin() {
@@ -378,21 +386,96 @@ async function deleteAdmissionApp(appId) {
   }
 }
 
-// ---- PUBLISH PERFORMANCE REPORT ----
+// ---- DYNAMIC BATCH-WISE SUBJECT MARKING & PUBLISH PERFORMANCE REPORT ----
+function onPerfBatchChange() {
+  const batchSelect = document.getElementById('perfBatchSelect');
+  const container = document.getElementById('perfDynamicSubjectsContainer');
+  if (!batchSelect || !container) return;
+
+  const batch = batchSelect.value;
+  let subjects = [];
+
+  if (batch.includes('11') || batch.includes('12')) {
+    subjects = ['Physics', 'Chemistry']; // Batch 11 & 12 default to Physics and Chemistry
+  } else if (batch.includes('9') || batch.includes('10')) {
+    subjects = ['Physics', 'Chemistry', 'Biology', 'Mathematics'];
+  } else if (batch.includes('Coding') || batch.includes('Python')) {
+    subjects = ['Python Logic', 'Coding Projects'];
+  } else {
+    subjects = ['Science', 'Mathematics', 'English', 'Social Science'];
+  }
+
+  container.innerHTML = `
+    <div class="grid g3 mb-1">
+      ${subjects.map(s => `
+        <div class="form-group mb-1">
+          <label class="form-label">${s} Marks</label>
+          <input type="number" step="0.5" class="form-control perf-subj-input" data-subject="${s}" placeholder="Enter ${s} score" oninput="recalcTotalPerfMarks()" />
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function addCustomSubjectInput() {
+  const container = document.getElementById('perfDynamicSubjectsContainer');
+  if (!container) return;
+
+  const subjectName = prompt('Enter custom subject name (e.g. Computer Science, Practical):');
+  if (!subjectName || !subjectName.trim()) return;
+
+  const cleanSubj = subjectName.trim();
+  let grid = container.querySelector('.grid');
+  if (!grid) {
+    container.innerHTML = '<div class="grid g3 mb-1"></div>';
+    grid = container.querySelector('.grid');
+  }
+
+  const div = document.createElement('div');
+  div.className = 'form-group mb-1';
+  div.innerHTML = `
+    <label class="form-label">${cleanSubj} Marks</label>
+    <input type="number" step="0.5" class="form-control perf-subj-input" data-subject="${cleanSubj}" placeholder="Enter ${cleanSubj} score" oninput="recalcTotalPerfMarks()" />
+  `;
+  grid.appendChild(div);
+}
+
+function recalcTotalPerfMarks() {
+  const inputs = document.querySelectorAll('.perf-subj-input');
+  let sum = 0;
+  let hasVal = false;
+  inputs.forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v)) {
+      sum += v;
+      hasVal = true;
+    }
+  });
+  const totalScoreEl = document.getElementById('perfTotalScore');
+  if (totalScoreEl && hasVal) {
+    totalScoreEl.value = sum;
+  }
+}
+
 async function handleAddPerformance(e) {
   e.preventDefault();
+  const batch = document.getElementById('perfBatchSelect') ? document.getElementById('perfBatchSelect').value : 'Class 11';
   const studentId = document.getElementById('perfStudentId').value.trim();
   const examTitle = document.getElementById('perfExamTitle').value.trim();
   const date = document.getElementById('perfDate').value;
   const totalScore = Number(document.getElementById('perfTotalScore').value);
   const maxMarks = Number(document.getElementById('perfMaxMarks').value) || 100;
-  const physics = Number(document.getElementById('perfPhysics').value) || 0;
-  const chemistry = Number(document.getElementById('perfChemistry').value) || 0;
-  const maths = Number(document.getElementById('perfMaths').value) || 0;
   const rank = Number(document.getElementById('perfRank').value) || 1;
   const percentile = Number(document.getElementById('perfPercentile').value) || 95;
   const remarks = document.getElementById('perfRemarks').value.trim();
   const classParticipation = Number(document.getElementById('perfParticipation').value) || 85;
+
+  const subjectBreakdown = {};
+  document.querySelectorAll('.perf-subj-input').forEach(inp => {
+    const subj = inp.dataset.subject;
+    const val = Number(inp.value) || 0;
+    if (subj) subjectBreakdown[subj] = val;
+  });
 
   if (!studentId || !examTitle || isNaN(totalScore)) {
     showToast('Student ID, Exam Title, and Total Score are required.', 'error');
@@ -400,12 +483,13 @@ async function handleAddPerformance(e) {
   }
 
   const payload = {
+    batch,
     studentId,
     examTitle,
     date,
     totalScore,
     maxMarks,
-    subjectBreakdown: { Physics: physics, Chemistry: chemistry, Mathematics: maths },
+    subjectBreakdown,
     rank,
     percentile,
     remarks,
@@ -415,10 +499,119 @@ async function handleAddPerformance(e) {
   const res = await apiRequest('/performance/add', 'POST', payload);
 
   if (res.success) {
-    showToast('Exam performance & 100-point index published to student portal!', 'success');
+    showToast('Exam performance & subject marks published to student portal!', 'success');
     document.getElementById('perfForm').reset();
+    onPerfBatchChange();
+    loadAllPerformanceReportsAdmin();
   } else {
     showToast(res.message || 'Error publishing report', 'error');
+  }
+}
+
+// ---- ALL PUBLISHED PERFORMANCE REPORTS DESK ----
+async function loadAllPerformanceReportsAdmin() {
+  const body = document.getElementById('allPerfReportsBody');
+  if (!body) return;
+
+  const res = await apiRequest('/performance/all/reports');
+  if (!res.success || !res.reports || !res.reports.length) {
+    body.innerHTML = '<tr><td colspan="6" class="text-center text-muted text-sm">No published exam reports found.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = res.reports.map(r => {
+    const subjStr = Object.entries(r.subjectBreakdown || {}).map(([k,v]) => `${k}: ${v}`).join(', ');
+    return `
+      <tr>
+        <td><span class="chip chip-cyan" style="font-weight:800;">${r.studentId}</span></td>
+        <td>
+          <div class="font-bold">${r.examTitle}</div>
+          <div class="text-xs text-muted">${r.batch || 'General Batch'} • ${r.date || 'N/A'}</div>
+        </td>
+        <td class="c-gold font-bold">${r.totalScore} / ${r.maxMarks}</td>
+        <td class="text-xs text-muted">${subjStr || 'N/A'}</td>
+        <td><span class="chip chip-purple">Rank #${r.rank} (${r.percentile}%)</span></td>
+        <td>
+          <div style="display:flex;gap:0.4rem;">
+            <button class="btn btn-sm btn-outline" onclick="openEditPerfModal('${r._id || r.reportId}', '${r.studentId}', '${(r.examTitle||'').replace(/'/g, "\\'")}', ${r.totalScore}, ${r.maxMarks}, ${r.rank}, ${r.percentile}, '${(r.remarks||'').replace(/'/g, "\\'")}')">
+              <i class="fa-solid fa-pen-to-square"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="deletePerformanceAdmin('${r._id || r.reportId}')">
+              <i class="fa-solid fa-trash"></i> Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openEditPerfModal(reportId, studentId, examTitle, totalScore, maxMarks, rank, percentile, remarks) {
+  const rIdEl = document.getElementById('editPerfReportId');
+  const sIdEl = document.getElementById('editPerfStudentId');
+  const eTitleEl = document.getElementById('editPerfExamTitle');
+  const tScoreEl = document.getElementById('editPerfTotalScore');
+  const mMarksEl = document.getElementById('editPerfMaxMarks');
+  const rRankEl = document.getElementById('editPerfRank');
+  const rPercEl = document.getElementById('editPerfPercentile');
+  const rRemEl = document.getElementById('editPerfRemarks');
+
+  if (rIdEl) rIdEl.value = reportId;
+  if (sIdEl) sIdEl.value = studentId;
+  if (eTitleEl) eTitleEl.value = examTitle;
+  if (tScoreEl) tScoreEl.value = totalScore;
+  if (mMarksEl) mMarksEl.value = maxMarks;
+  if (rRankEl) rRankEl.value = rank;
+  if (rPercEl) rPercEl.value = percentile;
+  if (rRemEl) rRemEl.value = remarks;
+
+  const modal = document.getElementById('editPerfModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeEditPerfModal() {
+  const modal = document.getElementById('editPerfModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleSavePerfEdit(e) {
+  e.preventDefault();
+  const reportId = document.getElementById('editPerfReportId').value;
+  const studentId = document.getElementById('editPerfStudentId').value.trim();
+  const examTitle = document.getElementById('editPerfExamTitle').value.trim();
+  const totalScore = Number(document.getElementById('editPerfTotalScore').value);
+  const maxMarks = Number(document.getElementById('editPerfMaxMarks').value) || 100;
+  const rank = Number(document.getElementById('editPerfRank').value) || 1;
+  const percentile = Number(document.getElementById('editPerfPercentile').value) || 95;
+  const remarks = document.getElementById('editPerfRemarks').value.trim();
+
+  const res = await apiRequest(`/performance/${reportId}`, 'PUT', {
+    studentId,
+    examTitle,
+    totalScore,
+    maxMarks,
+    rank,
+    percentile,
+    remarks
+  });
+
+  if (res.success) {
+    showToast('Exam report updated live!', 'success');
+    closeEditPerfModal();
+    loadAllPerformanceReportsAdmin();
+  } else {
+    showToast(res.message || 'Error updating report', 'error');
+  }
+}
+
+async function deletePerformanceAdmin(reportId) {
+  if (!confirm('Are you sure you want to delete this exam report?')) return;
+  const res = await apiRequest(`/performance/${reportId}`, 'DELETE');
+  if (res.success) {
+    showToast('Report deleted successfully!', 'success');
+    loadAllPerformanceReportsAdmin();
+  } else {
+    showToast(res.message || 'Error deleting report', 'error');
   }
 }
 
@@ -567,15 +760,18 @@ async function loadStudentsDirectoryAdmin() {
         <span class="chip chip-cyan" style="font-weight:800;">${s.studentId}</span>
         <div class="text-xs c-gold mt-1" style="font-weight:700;"><i class="fa-solid fa-key"></i> Pass: ${s.password || '1234'}</div>
       </td>
-      <td><div class="font-bold">${s.name}</div><div class="text-xs text-muted">${s.email}</div></td>
-      <td class="text-sm">${s.course}</td>
+      <td><div class="font-bold">${s.name}</div><div class="text-xs text-muted">${s.email} • ${s.phone || 'N/A'}</div></td>
+      <td class="text-sm">${s.course} <div class="text-xs text-muted">${s.batch || 'General Batch'}</div></td>
       <td>
         <span class="chip ${s.feeStatus === 'Paid' ? 'chip-green' : s.feeStatus === 'Partial' ? 'chip-amber' : 'chip-red'}">${s.feeStatus}</span>
         ${s.feeDueAmount ? `<div class="text-xs c-red mt-1">Due: ₹${s.feeDueAmount}</div>` : ''}
       </td>
-      <td><span class="chip chip-green">${s.status}</span></td>
+      <td><span class="chip ${s.status === 'Active' ? 'chip-green' : 'chip-red'}">${s.status}</span></td>
       <td>
-        <div style="display:flex;gap:0.4rem;align-items:center;">
+        <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-grad" onclick="openEditStudentFullModal('${s.studentId}')" title="Edit full student profile info">
+            <i class="fa-solid fa-user-pen"></i> Edit Info
+          </button>
           <button class="btn btn-sm btn-outline" onclick="openPassResetModal('${s.studentId}', '${s.password || '1234'}')"><i class="fa-solid fa-key"></i> Pass</button>
           <button class="btn btn-sm btn-outline" onclick="openFeeEditModal('${s.studentId}', '${s.feeStatus}', ${s.feeDueAmount || 0})">Fee</button>
           <button class="btn btn-sm btn-danger" onclick="deleteStudentAdmin('${s.studentId}')" title="Delete student record permanently">
@@ -585,6 +781,69 @@ async function loadStudentsDirectoryAdmin() {
       </td>
     </tr>
   `).join('');
+}
+
+async function openEditStudentFullModal(studentId) {
+  const res = await apiRequest('/students/' + studentId);
+  if (!res.success || !res.student) {
+    showToast('Failed to load student details', 'error');
+    return;
+  }
+  const s = res.student;
+
+  document.getElementById('editFullStuId').value = s.studentId;
+  document.getElementById('editFullStuIdDisplay').textContent = s.studentId;
+  document.getElementById('editFullStuName').value = s.name || '';
+  document.getElementById('editFullStuEmail').value = s.email || '';
+  document.getElementById('editFullStuPhone').value = s.phone || '';
+  document.getElementById('editFullStuCourse').value = s.course || '';
+  document.getElementById('editFullStuBatch').value = s.batch || 'Morning Batch Alpha';
+  document.getElementById('editFullStuPassword').value = s.password || '1234';
+  document.getElementById('editFullStuStatus').value = s.status || 'Active';
+  document.getElementById('editFullStuFeeStatus').value = s.feeStatus || 'Paid';
+  document.getElementById('editFullStuFeeDue').value = s.feeDueAmount || 0;
+
+  const modal = document.getElementById('editStudentFullModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeEditStudentFullModal() {
+  const modal = document.getElementById('editStudentFullModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleSaveStudentFullEdit(e) {
+  e.preventDefault();
+  const studentId = document.getElementById('editFullStuId').value;
+  const name = document.getElementById('editFullStuName').value.trim();
+  const email = document.getElementById('editFullStuEmail').value.trim();
+  const phone = document.getElementById('editFullStuPhone').value.trim();
+  const course = document.getElementById('editFullStuCourse').value.trim();
+  const batch = document.getElementById('editFullStuBatch').value.trim();
+  const password = document.getElementById('editFullStuPassword').value.trim();
+  const status = document.getElementById('editFullStuStatus').value;
+  const feeStatus = document.getElementById('editFullStuFeeStatus').value;
+  const feeDueAmount = Number(document.getElementById('editFullStuFeeDue').value) || 0;
+
+  const res = await apiRequest(`/students/${studentId}`, 'PUT', {
+    name,
+    email,
+    phone,
+    course,
+    batch,
+    password,
+    status,
+    feeStatus,
+    feeDueAmount
+  });
+
+  if (res.success) {
+    showToast(`Student profile for ${studentId} updated live!`, 'success');
+    closeEditStudentFullModal();
+    loadStudentsDirectoryAdmin();
+  } else {
+    showToast(res.message || 'Error updating student profile', 'error');
+  }
 }
 
 function openPassResetModal(studentId, currentPass) {
@@ -675,6 +934,7 @@ function closeFeeModal() {
 window.handleAdminPasscodeLogin     = handleAdminPasscodeLogin;
 window.logoutAdmin                  = logoutAdmin;
 window.cancelAdminLogin             = cancelAdminLogin;
+window.refreshAdminData             = refreshAdminData;
 window.loadLiveClassesAdmin         = loadLiveClassesAdmin;
 window.handleScheduleLiveClass      = handleScheduleLiveClass;
 window.deleteLiveClass              = deleteLiveClass;
@@ -686,15 +946,28 @@ window.handleSaveCourseFee          = handleSaveCourseFee;
 window.closeCourseFeeModal          = closeCourseFeeModal;
 window.updateAppStatus              = updateAppStatus;
 window.deleteAdmissionApp           = deleteAdmissionApp;
+window.onPerfBatchChange            = onPerfBatchChange;
+window.addCustomSubjectInput        = addCustomSubjectInput;
+window.recalcTotalPerfMarks         = recalcTotalPerfMarks;
 window.handleAddPerformance         = handleAddPerformance;
+window.loadAllPerformanceReportsAdmin = loadAllPerformanceReportsAdmin;
+window.openEditPerfModal            = openEditPerfModal;
+window.closeEditPerfModal           = closeEditPerfModal;
+window.handleSavePerfEdit           = handleSavePerfEdit;
+window.deletePerformanceAdmin       = deletePerformanceAdmin;
 window.handlePostNotice             = handlePostNotice;
 window.deleteNotice                 = deleteNotice;
 window.resolveDoubtAdmin            = resolveDoubtAdmin;
 window.deleteDoubtAdmin             = deleteDoubtAdmin;
 window.deleteStudentAdmin           = deleteStudentAdmin;
+window.openEditStudentFullModal    = openEditStudentFullModal;
+window.closeEditStudentFullModal   = closeEditStudentFullModal;
+window.handleSaveStudentFullEdit   = handleSaveStudentFullEdit;
 window.openPassResetModal           = openPassResetModal;
 window.handleSavePassReset          = handleSavePassReset;
 window.closePassResetModal          = closePassResetModal;
 window.openFeeEditModal             = openFeeEditModal;
 window.handleSaveFeeStatus          = handleSaveFeeStatus;
 window.closeFeeModal                = closeFeeModal;
+
+

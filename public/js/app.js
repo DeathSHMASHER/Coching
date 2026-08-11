@@ -43,23 +43,17 @@ function updateNavAuthState() {
   navActions.forEach(action => {
     if (savedAdmin) {
       action.innerHTML = `
-        <a href="/admin-portal.html" class="btn btn-grad btn-sm" style="margin-right:0.4rem;">
+        <a href="/admin-portal.html" class="btn btn-grad btn-sm">
           <i class="fa-solid fa-user-shield"></i> Director Desk
         </a>
-        <button class="btn btn-ghost btn-sm" onclick="logoutAdmin()">
-          <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </button>
       `;
     } else if (savedStu) {
       let stuObj = {};
       try { stuObj = JSON.parse(savedStu); } catch(e){}
       action.innerHTML = `
-        <a href="/student-portal.html" class="btn btn-grad btn-sm" style="margin-right:0.4rem;">
+        <a href="/student-portal.html" class="btn btn-grad btn-sm">
           <i class="fa-solid fa-user-graduate"></i> My Portal (${stuObj.studentId || 'Active'})
         </a>
-        <button class="btn btn-ghost btn-sm" onclick="logoutStudent()">
-          <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </button>
       `;
     } else {
       action.innerHTML = `

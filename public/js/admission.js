@@ -135,36 +135,104 @@ async function handleAdmission(e) {
   }
 }
 
+function selectCourseAndScrollToForm(course, board) {
+  const courseSelect = document.getElementById('admCourse');
+  if (courseSelect && course) {
+    let matchFound = false;
+    for (let opt of courseSelect.options) {
+      if (opt.value.toLowerCase() === course.toLowerCase() || course.toLowerCase().includes(opt.value.toLowerCase())) {
+        courseSelect.value = opt.value;
+        matchFound = true;
+        break;
+      }
+    }
+    if (!matchFound) {
+      const newOpt = document.createElement('option');
+      newOpt.value = course;
+      newOpt.textContent = course;
+      newOpt.selected = true;
+      courseSelect.appendChild(newOpt);
+    }
+  }
+
+  if (board) {
+    const boardInput = document.getElementById('admMsg');
+    if (boardInput) boardInput.value = `Target Board: ${board}`;
+  }
+
+  if (window.updateMultiCourseSummary) window.updateMultiCourseSummary();
+
+  const card = document.getElementById('applyFormCard');
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth' });
+    const nameInp = document.getElementById('admName');
+    if (nameInp) setTimeout(() => nameInp.focus(), 500);
+  }
+}
+window.selectCourseAndScrollToForm = selectCourseAndScrollToForm;
+
 async function checkStatus() {
-  const q = document.getElementById('statusQuery').value.trim();
-  const out = document.getElementById('statusResult');
+  const queryEl = document.getElementById('statusQuery') || document.getElementById('portalStatusQuery');
+  const outEl = document.getElementById('statusResult') || document.getElementById('portalStatusResult');
+
+  if (!queryEl || !outEl) return;
+  const q = queryEl.value.trim();
 
   if (!q) { showToast('Please enter your Application ID or Email.', 'error'); return; }
 
-  out.innerHTML = '<p class="text-muted text-sm mt-2">Searching…</p>';
+  outEl.innerHTML = '<p class="text-muted text-sm mt-2"><i class="fa-solid fa-spinner fa-spin"></i> Checking status…</p>';
 
   const res = await apiRequest('/admissions/status/' + encodeURIComponent(q));
 
   if (res.success && res.application) {
     const app = res.application;
     const statusChip = app.status === 'Approved' ? 'chip-green' : app.status === 'Rejected' ? 'chip-red' : 'chip-amber';
-    out.innerHTML = `
-      <div class="status-result-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+    const uniquePass = app.assignedPassword || 'JIG#' + Math.floor(1000 + Math.random() * 9000);
+
+    outEl.innerHTML = `
+      <div class="status-result-card mt-2 card card-p2" style="border-color:var(--gold);background:rgba(255,183,3,0.05);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
           <div>
-            <div style="font-weight:700;font-size:1.05rem;">${app.name}</div>
-            <div class="text-sm text-muted">App ID: <strong>${app.applicationId}</strong> &nbsp;•&nbsp; ${app.targetCourse}</div>
+            <div style="font-weight:800;font-size:1.1rem;color:#fff;">${app.name}</div>
+            <div class="text-xs text-muted">App Reference ID: <strong class="c-gold">${app.applicationId}</strong> &nbsp;•&nbsp; ${app.targetCourse}</div>
           </div>
-          <span class="chip ${statusChip}">${app.status}</span>
+          <span class="chip ${statusChip}" style="font-size:0.85rem;font-weight:800;">${app.status}</span>
         </div>
-        <div class="text-sm text-muted">Applied: ${new Date(app.appliedAt).toLocaleDateString()} &nbsp;|&nbsp; Email: ${app.email}</div>
+        <div class="text-xs text-muted mb-2">Applied Date: ${new Date(app.appliedAt).toLocaleDateString()} &nbsp;|&nbsp; Gmail: ${app.email}</div>
+
         ${app.status === 'Approved' ? `
-          <div class="info-tip mt-2">
-            <i class="fa-solid fa-graduation-cap"></i> <strong>Congratulations!</strong> Your Student ID is: <span style="font-family:var(--font-heading);font-size:1.1rem;font-weight:800;color:var(--cyan);">${app.studentIdAssigned}</span>. Login to the Student Portal now!
+          <div style="background:rgba(0,240,255,0.08);border:1.5px solid var(--cyan);padding:1rem;border-radius:var(--r-sm);" class="mt-2">
+            <h4 style="font-size:1.05rem;font-weight:800;" class="c-cyan mb-1">
+              <i class="fa-solid fa-circle-check"></i> Admission Approved! Your Portal Credentials:
+            </h4>
+            <div class="grid g2 mb-2">
+              <div style="background:rgba(0,0,0,0.3);padding:0.75rem;border-radius:var(--r-xs);">
+                <div class="text-xs text-muted">Assigned Student ID:</div>
+                <div style="font-family:var(--font-heading);font-size:1.3rem;font-weight:800;" class="c-gold">${app.studentIdAssigned}</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.3);padding:0.75rem;border-radius:var(--r-xs);">
+                <div class="text-xs text-muted">Unique Portal Password (Sent to Gmail):</div>
+                <div style="font-family:var(--font-heading);font-size:1.3rem;font-weight:800;" class="c-cyan"><i class="fa-solid fa-key text-xs"></i> ${uniquePass}</div>
+              </div>
+            </div>
+            <p class="text-xs text-muted mb-2"><i class="fa-solid fa-envelope c-gold"></i> Credentials forwarded to registered Gmail: <strong>${app.email}</strong></p>
+            <a href="/student-portal.html" class="btn btn-grad btn-sm btn-block">
+              <i class="fa-solid fa-right-to-bracket"></i> Login To Student Portal Now
+            </a>
           </div>
-        ` : app.status === 'Pending' ? `<p class="text-sm text-muted mt-2"><i class="fa-solid fa-clock c-amber"></i> Your application is under review. We'll update you soon.</p>` : `<p class="text-sm text-muted mt-2"><i class="fa-solid fa-times-circle c-red"></i> This application was not selected. Please contact us for more info.</p>`}
+        ` : app.status === 'Pending' ? `
+          <div style="background:rgba(255,183,3,0.08);border:1px solid rgba(255,183,3,0.3);padding:0.9rem;border-radius:var(--r-sm);" class="mt-2 text-xs text-muted">
+            <i class="fa-solid fa-clock c-gold"></i> Your application is currently under review by Director Shahriyar Taufik. Credentials will appear here upon approval.
+          </div>
+        ` : `
+          <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);padding:0.9rem;border-radius:var(--r-sm);" class="mt-2 text-xs text-muted">
+            <i class="fa-solid fa-times-circle c-red"></i> Application was not selected. Contact lead office for more details.
+          </div>
+        `}
       </div>`;
   } else {
-    out.innerHTML = `<div class="status-result-card text-center"><i class="fa-solid fa-folder-open" style="font-size:2rem;color:var(--amber);margin-bottom:0.5rem;display:block;"></i><p class="text-muted text-sm">${res.message || 'No record found with the provided ID / Email.'}</p></div>`;
+    outEl.innerHTML = `<div class="status-result-card text-center card card-p2 mt-2"><i class="fa-solid fa-folder-open" style="font-size:2rem;color:var(--gold);margin-bottom:0.5rem;display:block;"></i><p class="text-muted text-sm">${res.message || 'No application record found with provided ID or Email.'}</p></div>`;
   }
 }
+window.checkStatus = checkStatus;
+

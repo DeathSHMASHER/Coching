@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const performanceSchema = new mongoose.Schema({
   studentId: { type: String, required: true },
   examTitle: { type: String, required: true },
+  batch: { type: String, default: 'General Batch' },
   date: { type: String, required: true },
   totalScore: { type: Number, required: true },
   maxMarks: { type: Number, required: true, default: 100 },

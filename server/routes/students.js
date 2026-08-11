@@ -151,34 +151,40 @@ router.put('/:studentId/password', async (req, res) => {
   }
 });
 
-// Admin: Update student fee status
-router.put('/:studentId/fee', async (req, res) => {
+// Admin: Update Full Student Profile Information
+router.put('/:studentId', async (req, res) => {
   try {
     const cleanId = req.params.studentId.trim();
-    const { feeStatus, feeDueAmount, feeDueDate } = req.body;
-
+    const { name, email, phone, course, batch, password, status, feeStatus, feeDueAmount } = req.body;
     const { useMock } = getDbState();
+
+    const updateFields = {};
+    if (name) updateFields.name = name.trim();
+    if (email) updateFields.email = email.trim();
+    if (phone) updateFields.phone = phone.trim();
+    if (course) updateFields.course = course.trim();
+    if (batch) updateFields.batch = batch.trim();
+    if (password) updateFields.password = password.trim();
+    if (status) updateFields.status = status;
+    if (feeStatus) updateFields.feeStatus = feeStatus;
+    if (feeDueAmount !== undefined) updateFields.feeDueAmount = Number(feeDueAmount);
 
     if (useMock) {
       const stu = mockData.students.find(s => s.studentId.toLowerCase() === cleanId.toLowerCase());
-      if (!stu) return res.status(404).json({ success: false, message: 'Student not found' });
-
-      if (feeStatus) stu.feeStatus = feeStatus;
-      if (feeDueAmount !== undefined) stu.feeDueAmount = Number(feeDueAmount);
-      if (feeDueDate) stu.feeDueDate = feeDueDate;
-
-      return res.json({ success: true, message: 'Fee record updated successfully', student: stu });
+      if (!stu) return res.status(404).json({ success: false, message: 'Student profile not found' });
+      Object.assign(stu, updateFields);
+      return res.json({ success: true, message: `Student profile ${cleanId} updated live!`, student: stu });
     } else {
       const stu = await Student.findOneAndUpdate(
         { studentId: new RegExp('^' + cleanId + '$', 'i') },
-        { feeStatus, feeDueAmount: Number(feeDueAmount), feeDueDate },
+        updateFields,
         { new: true }
       );
-      if (!stu) return res.status(404).json({ success: false, message: 'Student not found' });
-      return res.json({ success: true, message: 'Fee record updated successfully', student: stu });
+      if (!stu) return res.status(404).json({ success: false, message: 'Student profile not found' });
+      return res.json({ success: true, message: `Student profile ${cleanId} updated live!`, student: stu });
     }
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error updating fee status' });
+    res.status(500).json({ success: false, message: 'Error updating student profile: ' + err.message });
   }
 });
 

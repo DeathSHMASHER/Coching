@@ -79,7 +79,10 @@
         </div>
       </div>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Exit Admin Desk</button>
+    <div class="dash-actions-row">
+      <button class="btn btn-outline btn-sm" onclick="refreshAdminData()"><i class="fa-solid fa-rotate"></i> Refresh Desk</button>
+      <button class="btn btn-ghost btn-sm" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Exit Admin Desk</button>
+    </div>
   </div>
 
   <div class="tabs-wrap">
@@ -250,49 +253,65 @@
         </div>
       </div>
 
-      <!-- 4. EXAM SCORE PUBLISHER -->
+      <!-- 4. EXAM SCORE PUBLISHER & FULL EDIT CONTROL DESK -->
       <div class="tab-pane" id="tab-perf-pub">
-        <div class="card card-p3" style="max-width:800px;margin:0 auto;">
+        <div class="card card-p3 mb-4" style="max-width:900px;margin:0 auto;">
           <h3 class="font-heading mb-2"><i class="fa-solid fa-chart-line c-gold"></i> Publish Student Exam Score &amp; Index Report</h3>
+          <p class="text-xs text-muted mb-3">Select batch to dynamically load subjects. For example, selecting <strong>Class 11</strong> loads Physics &amp; Chemistry dynamically.</p>
           <form id="perfForm" onsubmit="handleAddPerformance(event)">
-            <div class="grid g2">
+            <div class="grid g3">
+              <div class="form-group">
+                <label class="form-label">Select Student Batch / Course *</label>
+                <select id="perfBatchSelect" class="form-control" onchange="onPerfBatchChange()" required>
+                  <option value="Class 11">Class 11 Physics / Chemistry</option>
+                  <option value="Class 12">Class 12 Physics / Chemistry</option>
+                  <option value="Class 10">Class 10 Board Science &amp; Math</option>
+                  <option value="Class 9">Class 9 Board Science &amp; Math</option>
+                  <option value="Class 8">Class 8 Advanced Foundation</option>
+                  <option value="Class 7">Class 7 Advanced Foundation</option>
+                  <option value="Class 6">Class 6 Foundation</option>
+                  <option value="Class 5">Class 5 Foundation</option>
+                  <option value="Python Coding">Python Coding Specialization</option>
+                </select>
+              </div>
               <div class="form-group">
                 <label class="form-label">Student ID (e.g. studt or STU-2026-104) *</label>
                 <input id="perfStudentId" class="form-control" type="text" placeholder="e.g. STU-2026-104" required />
               </div>
               <div class="form-group">
                 <label class="form-label">Exam / Assessment Title *</label>
-                <input id="perfExamTitle" class="form-control" type="text" placeholder="e.g. Class 10 Mid-Term Science Exam" required />
+                <input id="perfExamTitle" class="form-control" type="text" placeholder="e.g. Mid-Term Assessment" required />
               </div>
             </div>
+
+            <!-- DYNAMIC BATCH SUBJECT MARKS CONTAINER -->
+            <div class="mb-2">
+              <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
+                <label class="form-label c-gold mb-0" style="font-size:0.95rem;font-weight:800;"><i class="fa-solid fa-list-check"></i> Batch Subject Marks:</label>
+                <button type="button" class="btn btn-outline btn-sm" onclick="addCustomSubjectInput()">
+                  <i class="fa-solid fa-plus"></i> Add Custom Subject
+                </button>
+              </div>
+              <div id="perfDynamicSubjectsContainer" class="dynamic-subj-box">
+                <!-- Subject inputs rendered dynamically by JS -->
+              </div>
+            </div>
+
             <div class="grid g3">
               <div class="form-group">
-                <label class="form-label">Date</label>
+                <label class="form-label">Exam Date</label>
                 <input id="perfDate" class="form-control" type="date" />
               </div>
               <div class="form-group">
-                <label class="form-label">Total Marks Obtained *</label>
-                <input id="perfTotalScore" class="form-control" type="number" step="0.5" placeholder="e.g. 96" required />
+                <label class="form-label">Total Marks Obtained (Auto / Override) *</label>
+                <input id="perfTotalScore" class="form-control" type="number" step="0.5" placeholder="Auto-calculated" required />
               </div>
               <div class="form-group">
                 <label class="form-label">Max Total Marks</label>
                 <input id="perfMaxMarks" class="form-control" type="number" value="100" />
               </div>
             </div>
-            <div class="grid g3">
-              <div class="form-group">
-                <label class="form-label">Physics Marks</label>
-                <input id="perfPhysics" class="form-control" type="number" placeholder="95" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Chemistry Marks</label>
-                <input id="perfChemistry" class="form-control" type="number" placeholder="94" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Mathematics Marks</label>
-                <input id="perfMaths" class="form-control" type="number" placeholder="99" />
-              </div>
-            </div>
+
             <div class="grid g3">
               <div class="form-group">
                 <label class="form-label">Batch Rank</label>
@@ -307,14 +326,39 @@
                 <input id="perfParticipation" class="form-control" type="number" value="85" min="0" max="100" />
               </div>
             </div>
+
             <div class="form-group">
               <label class="form-label">Mentor Remarks</label>
-              <input id="perfRemarks" class="form-control" type="text" placeholder="e.g. Excellent calculus conceptual accuracy!" />
+              <input id="perfRemarks" class="form-control" type="text" placeholder="e.g. Excellent numerical clarity!" />
             </div>
+
             <button type="submit" class="btn btn-grad btn-block btn-lg">
               <i class="fa-solid fa-paper-plane"></i> Publish Score To Student Dashboard
             </button>
           </form>
+        </div>
+
+        <!-- PUBLISHED SCORES MANAGEMENT TABLE -->
+        <div class="card card-p3">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-2">
+            <h3 class="font-heading"><i class="fa-solid fa-file-signature c-gold"></i> All Published Exam Reports (Full Admin Control)</h3>
+            <button class="btn btn-outline btn-sm" onclick="loadAllPerformanceReportsAdmin()"><i class="fa-solid fa-rotate"></i> Refresh Reports</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student ID</th>
+                  <th>Exam Title &amp; Batch</th>
+                  <th>Total Score</th>
+                  <th>Subject Breakdown</th>
+                  <th>Rank &amp; Percentile</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="allPerfReportsBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -464,6 +508,135 @@
       </div>
       <button type="submit" class="btn btn-grad btn-block btn-lg mt-1">
         <i class="fa-solid fa-floppy-disk"></i> Save Ledger Status
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT EXAM MARKS MODAL -->
+<div id="editPerfModal" class="modal-overlay hidden">
+  <div class="modal-box card card-p3">
+    <div class="modal-head">
+      <h3 class="font-heading"><i class="fa-solid fa-pen-to-square c-gold"></i> Edit Published Exam Score</h3>
+      <button class="modal-close" onclick="closeEditPerfModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="handleSavePerfEdit(event)">
+      <input type="hidden" id="editPerfReportId" />
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Student ID</label>
+          <input id="editPerfStudentId" class="form-control" type="text" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Exam Title</label>
+          <input id="editPerfExamTitle" class="form-control" type="text" required />
+        </div>
+      </div>
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Total Score</label>
+          <input id="editPerfTotalScore" class="form-control" type="number" step="0.5" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Marks</label>
+          <input id="editPerfMaxMarks" class="form-control" type="number" value="100" />
+        </div>
+      </div>
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Rank</label>
+          <input id="editPerfRank" class="form-control" type="number" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Percentile (%)</label>
+          <input id="editPerfPercentile" class="form-control" type="number" step="0.1" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mentor Remarks</label>
+        <input id="editPerfRemarks" class="form-control" type="text" />
+      </div>
+      <button type="submit" class="btn btn-grad btn-block btn-lg mt-1">
+        <i class="fa-solid fa-floppy-disk"></i> Update Published Score Live
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT FULL STUDENT PROFILE MODAL -->
+<div id="editStudentFullModal" class="modal-overlay hidden">
+  <div class="modal-box card card-p3">
+    <div class="modal-head">
+      <h3 class="font-heading"><i class="fa-solid fa-user-pen c-gold"></i> Edit Student Profile &amp; Information</h3>
+      <button class="modal-close" onclick="closeEditStudentFullModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form onsubmit="handleSaveStudentFullEdit(event)">
+      <input type="hidden" id="editFullStuId" />
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Student ID</label>
+          <div class="font-bold c-cyan" id="editFullStuIdDisplay" style="font-family:var(--font-heading);font-size:1.1rem;">STU-2026-101</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input id="editFullStuName" class="form-control" type="text" required />
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input id="editFullStuEmail" class="form-control" type="email" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Phone *</label>
+          <input id="editFullStuPhone" class="form-control" type="tel" required />
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Enrolled Course *</label>
+          <input id="editFullStuCourse" class="form-control" type="text" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned Batch</label>
+          <input id="editFullStuBatch" class="form-control" type="text" placeholder="e.g. Evening Batch Alpha" />
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Unique Portal Password *</label>
+          <input id="editFullStuPassword" class="form-control" type="text" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Status</label>
+          <select id="editFullStuStatus" class="form-control">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Suspended">Suspended</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid g2">
+        <div class="form-group">
+          <label class="form-label">Fee Status</label>
+          <select id="editFullStuFeeStatus" class="form-control">
+            <option value="Paid">Paid (Clear)</option>
+            <option value="Partial">Partial Payment</option>
+            <option value="Unpaid">Unpaid / Due</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fee Due Amount (₹)</label>
+          <input id="editFullStuFeeDue" class="form-control" type="number" min="0" />
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-grad btn-block btn-lg mt-2">
+        <i class="fa-solid fa-floppy-disk"></i> Update Student Profile Live
       </button>
     </form>
   </div>
