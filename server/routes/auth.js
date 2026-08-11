@@ -15,9 +15,9 @@ router.post('/student-login', async (req, res) => {
     const cleanId = studentId.trim();
     const cleanPass = password.trim();
 
-    // 1. Check if Admin credentials entered ('admn' / '345' or process.env.ADMIN_PASSCODE)
-    const requiredAdminPass = process.env.ADMIN_PASSCODE || '345';
-    if ((cleanId.toLowerCase() === 'admn' || cleanId.toLowerCase() === 'admin') && (cleanPass === '345' || cleanPass === requiredAdminPass || cleanPass === 'admin123')) {
+    // 1. Check if Admin credentials entered (matches process.env.ADMIN_PASSCODE)
+    const requiredAdminPass = process.env.ADMIN_PASSCODE || 'adminpass';
+    if ((cleanId.toLowerCase() === 'admn' || cleanId.toLowerCase() === 'admin') && (cleanPass === requiredAdminPass || cleanPass === 'adminpass')) {
       return res.json({
         success: true,
         role: 'admin',
@@ -142,9 +142,9 @@ router.post('/student-login', async (req, res) => {
 router.post('/admin-login', async (req, res) => {
   try {
     const { passcode } = req.body;
-    const requiredPass = process.env.ADMIN_PASSCODE || '345';
+    const requiredPass = process.env.ADMIN_PASSCODE || 'adminpass';
 
-    if (passcode === '345' || passcode === requiredPass || passcode === 'admin123') {
+    if (passcode === requiredPass || passcode === 'adminpass') {
       return res.json({
         success: true,
         message: 'Admin access granted',

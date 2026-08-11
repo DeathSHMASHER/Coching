@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 
 // Send Email Notification for New Admission Application
 async function sendAdmissionEmail(admission) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@coaching.com';
   const subject = `🚨 New Admission Application Received: ${admission.applicationId} - ${admission.name}`;
 
   const htmlContent = `

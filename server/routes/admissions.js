@@ -39,14 +39,14 @@ router.post('/apply', async (req, res) => {
       await newApp.save();
     }
 
-    // Automatically send email notification to shahriyartaufik@gmail.com
+    // Automatically send email notification to admin email
     sendAdmissionEmail(payload).catch(err => console.error('Email dispatch background error:', err));
 
     return res.json({
       success: true,
       message: 'Admission application submitted successfully!',
       applicationId: appId,
-      emailNotified: process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'
+      emailNotified: process.env.ADMIN_EMAIL || 'admin@coaching.com'
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error submitting admission application' });
