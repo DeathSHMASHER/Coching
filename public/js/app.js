@@ -234,28 +234,28 @@ function calculateScienceRoadmap() {
     regFee = '₹1,500 / month';
     regSubjects = 'English, Hindi, Mathematics, Science, Social Science, Computer';
     csTitle = 'Python Coding Specialization';
-    csFee = '₹1,000 / month';
+    csFee = '₹1,000 / month (Add-on Specialization)';
     csSubjects = 'No Coding Experience Needed! Python Programming & Logic (2 Classes/wk)';
   } else if (gradeNum === 7 || gradeNum === 8) {
     regTitle = `Class ${gradeNum} Advanced Foundation (All Core Subjects)`;
     regFee = '₹2,500 / month';
     regSubjects = 'English, Hindi, Mathematics, Science, Social Science, Computer';
     csTitle = 'Python Coding Specialization';
-    csFee = '₹1,000 / month';
+    csFee = '₹1,000 / month (Add-on Specialization)';
     csSubjects = 'No Prior Knowledge Required! Step-by-Step Python & Projects (2 Classes/wk)';
   } else if (gradeNum === 9 || gradeNum === 10) {
     regTitle = `Class ${gradeNum} Board Science & Mathematics Mastery`;
     regFee = '₹4,000 / month';
     regSubjects = 'Physics, Chemistry, Biology & Mathematics';
-    csTitle = `Computer Science Class ${gradeNum} (or Python Specialization)`;
-    csFee = `₹1,500 / month (or ₹1,000 / month for Python)`;
+    csTitle = `Computer Science Class ${gradeNum} (Python & Computer Logic)`;
+    csFee = '₹1,200 / month (Standalone) • <strong>₹1,000 / month (₹200 OFF as Add-on!)</strong>';
     csSubjects = 'Taught From Fundamentals! CS Logic & Practical Exam Drills';
   } else {
-    regTitle = `Class ${gradeNum} Board Physics + Mathematics Package`;
-    regFee = '₹3,500 / month (or ₹1,500 / subject)';
-    regSubjects = 'Physics & Mathematics (Calculus, Mechanics, Electrodynamics)';
+    regTitle = `Class ${gradeNum} Senior Secondary Science (Physics & Chemistry)`;
+    regFee = '₹1,500 / mo per subject • <strong>₹3,000 / mo for Both Subjects</strong>';
+    regSubjects = 'Physics (₹1,500) & Chemistry (₹1,500) — Opt 1 or Both!';
     csTitle = `Computer Science Class ${gradeNum} (Python & Data Structures)`;
-    csFee = '₹2,000 / month';
+    csFee = '₹2,000 / month (Standalone) • <strong>₹1,500 / month (₹500 OFF as Add-on!)</strong>';
     csSubjects = 'Advanced Python, Data Structures & Algorithms Taught Step-by-Step';
   }
 

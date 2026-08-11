@@ -49,32 +49,97 @@ document.addEventListener('DOMContentLoaded', () => {
 // Update fee calculation summary when checkboxes are toggled
 function updateMultiCourseSummary() {
   const primaryCourse = document.getElementById('admCourse') ? document.getElementById('admCourse').value : '';
-  const addCoding = document.getElementById('addonCoding') ? document.getElementById('addonCoding').checked : false;
-  const addScience = document.getElementById('addonScience') ? document.getElementById('addonScience').checked : false;
+  const optPhysics = document.getElementById('subjectPhysics') ? document.getElementById('subjectPhysics').checked : false;
+  const optChemistry = document.getElementById('subjectChemistry') ? document.getElementById('subjectChemistry').checked : false;
+  const optCoding11 = document.getElementById('addonCoding11') ? document.getElementById('addonCoding11').checked : false;
+  const optCoding9 = document.getElementById('addonCoding9') ? document.getElementById('addonCoding9').checked : false;
+  const optCodingBasic = document.getElementById('addonCoding') ? document.getElementById('addonCoding').checked : false;
   const summaryBox = document.getElementById('multiCourseSummary');
 
   if (!summaryBox) return;
 
   let totalFee = 0;
   let items = [];
+  let discountsApplied = [];
 
-  if (primaryCourse) {
+  const isClass11or12 = primaryCourse.includes('11') || primaryCourse.includes('12');
+  const isClass9or10 = primaryCourse.includes('9') || primaryCourse.includes('10');
+  const isClass5to8 = primaryCourse.includes('5') || primaryCourse.includes('6') || primaryCourse.includes('7') || primaryCourse.includes('8');
+
+  // CLASS 11 & 12 SPECIFIC PER-SUBJECT LOGIC
+  if (isClass11or12) {
+    let academicCount = 0;
+    if (optPhysics) { academicCount++; items.push('Physics (₹1,500/mo)'); }
+    if (optChemistry) { academicCount++; items.push('Chemistry (₹1,500/mo)'); }
+
+    if (academicCount === 1) {
+      totalFee += 1500;
+    } else if (academicCount === 2) {
+      totalFee += 3000;
+    } else if (primaryCourse.includes('Physics + Chemistry') || primaryCourse.includes('Package')) {
+      items.push('Physics & Chemistry Combined (₹3,000/mo)');
+      totalFee += 3000;
+      academicCount = 2;
+    } else if (primaryCourse.includes('Physics')) {
+      items.push('Physics (₹1,500/mo)');
+      totalFee += 1500;
+      academicCount = 1;
+    } else if (primaryCourse.includes('Chemistry')) {
+      items.push('Chemistry (₹1,500/mo)');
+      totalFee += 1500;
+      academicCount = 1;
+    }
+
+    if (optCoding11 || primaryCourse.includes('Computer Science')) {
+      if (academicCount > 0) {
+        totalFee += 1500; // ₹500 OFF as add-on!
+        items.push('Computer Science & Coding (Add-on: ₹1,500/mo)');
+        discountsApplied.push('₹500 OFF on Computer Science (Secondary Add-on Discount)');
+      } else {
+        totalFee += 2000; // Standalone ₹2,000
+        items.push('Computer Science & Coding (Standalone: ₹2,000/mo)');
+      }
+    }
+  } 
+  // CLASS 9 & 10 SPECIFIC LOGIC
+  else if (isClass9or10) {
+    let hasAcademic = false;
+    if (!primaryCourse.includes('Computer Science')) {
+      items.push(primaryCourse + ' (₹4,000/mo)');
+      totalFee += 4000;
+      hasAcademic = true;
+    }
+
+    if (optCoding9 || primaryCourse.includes('Computer Science')) {
+      if (hasAcademic) {
+        totalFee += 1000; // ₹200 OFF as add-on!
+        items.push('Computer / Coding (Add-on: ₹1,000/mo)');
+        discountsApplied.push('₹200 OFF on Computer / Coding (Secondary Add-on Discount)');
+      } else {
+        totalFee += 1200; // Standalone ₹1,200
+        items.push('Computer / Coding (Standalone: ₹1,200/mo)');
+      }
+    }
+  }
+  // CLASS 5 TO 8 SPECIFIC LOGIC
+  else if (isClass5to8) {
+    if (primaryCourse.includes('5') || primaryCourse.includes('6')) {
+      items.push(primaryCourse + ' (₹1,500/mo)');
+      totalFee += 1500;
+    } else {
+      items.push(primaryCourse + ' (₹2,500/mo)');
+      totalFee += 2500;
+    }
+
+    if (optCodingBasic || primaryCourse.includes('Python Coding')) {
+      items.push('Python Coding Specialization (+₹1,000/mo)');
+      totalFee += 1000;
+    }
+  } 
+  // GENERAL FALLBACK
+  else if (primaryCourse) {
     items.push(primaryCourse);
-    if (primaryCourse.includes('5') || primaryCourse.includes('6')) totalFee += 1500;
-    else if (primaryCourse.includes('7') || primaryCourse.includes('8')) totalFee += 2500;
-    else if (primaryCourse.includes('9') || primaryCourse.includes('10')) totalFee += 4000;
-    else if (primaryCourse.includes('11') || primaryCourse.includes('12')) totalFee += 3500;
-    else totalFee += 2000;
-  }
-
-  if (addCoding) {
-    items.push('Python Coding Specialization (+₹1,000/mo)');
-    totalFee += 1000;
-  }
-
-  if (addScience) {
-    items.push('Computer Science & Practical Booster (+₹1,500/mo)');
-    totalFee += 1500;
+    totalFee += 2000;
   }
 
   if (!items.length) {
@@ -83,12 +148,17 @@ function updateMultiCourseSummary() {
   }
 
   summaryBox.innerHTML = `
-    <div style="background:rgba(255,183,3,0.06);border:1px solid rgba(255,183,3,0.3);padding:0.85rem;border-radius:var(--r-sm);" class="mt-2 mb-2">
-      <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-        <span class="text-xs text-muted font-bold"><i class="fa-solid fa-layer-group c-gold"></i> Selected Program &amp; Add-ons:</span>
-        <span class="chip chip-purple font-bold">Total Estimated: ₹${totalFee} / mo</span>
+    <div style="background:rgba(255,183,3,0.06);border:1.5px solid var(--gold);padding:1rem;border-radius:var(--r-sm);" class="mt-2 mb-2">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
+        <span class="text-xs text-muted font-bold"><i class="fa-solid fa-calculator c-gold"></i> Live Course Fee Calculation Breakdown:</span>
+        <span class="chip chip-purple font-bold" style="font-size:1.05rem;">Total Monthly Fee: ₹${totalFee} / mo</span>
       </div>
-      <div class="text-sm font-bold c-gold">${items.join(' + ')}</div>
+      <div class="text-sm font-bold c-gold mb-1">${items.join(' + ')}</div>
+      ${discountsApplied.length ? `
+        <div class="text-xs c-cyan font-bold" style="background:rgba(0,240,255,0.08);padding:0.4rem 0.6rem;border-radius:var(--r-xs);display:inline-block;">
+          <i class="fa-solid fa-tag"></i> Special Discount Applied: ${discountsApplied.join(', ')}
+        </div>
+      ` : ''}
     </div>
   `;
 }
