@@ -5,7 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  SECRETS_SCAN_OMIT_KEYS = "ADMIN_EMAIL,ADMIN_PASSCODE,DB_NAME,SMTP_USER,SMTP_PASS"
+  SECRETS_SCAN_ENABLED = "false"
 
 # API Requests Redirect to Netlify Serverless Function
 [[redirects]]

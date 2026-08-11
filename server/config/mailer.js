@@ -45,7 +45,7 @@ async function sendAdmissionEmail(admission) {
 
       <div style="background: rgba(255, 183, 3, 0.1); border-left: 4px solid #ffb703; padding: 12px; border-radius: 4px; margin-top: 20px;">
         <p style="margin: 0; font-size: 13px; color: #ffffff;">
-          To review or approve this application, log in to your <a href="http://localhost:5000/admin-portal.html" style="color: #ffb703; font-weight: bold;">Jigyasa Science Admin Control Desk</a>.
+          To review or approve this application, log in to your <a href="/admin-portal.html" style="color: #ffb703; font-weight: bold;">Jigyasa Science Admin Control Desk</a>.
         </p>
       </div>
     </div>
@@ -63,7 +63,7 @@ async function sendAdmissionEmail(admission) {
 
   try {
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT) || 587,
       secure: false,
       auth: {
