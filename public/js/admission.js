@@ -41,38 +41,29 @@ function updateMultiCourseSummary() {
   const isClass9or10 = primaryCourse.includes('9') || primaryCourse.includes('10');
   const isClass5to8 = primaryCourse.includes('5') || primaryCourse.includes('6') || primaryCourse.includes('7') || primaryCourse.includes('8');
 
-  // CLASS 11 & 12 SPECIFIC PER-SUBJECT LOGIC
+  // CLASS 11 & 12 SPECIFIC LOGIC
   if (isClass11or12) {
-    let academicCount = 0;
-    if (optPhysics) { academicCount++; items.push('Physics (₹1,500/mo)'); }
-    if (optChemistry) { academicCount++; items.push('Chemistry (₹1,500/mo)'); }
-
-    if (academicCount === 1) {
-      totalFee += 1500;
-    } else if (academicCount === 2) {
+    let hasAcademic = false;
+    if (primaryCourse.includes('Combined') || primaryCourse.includes('Both')) {
+      items.push(primaryCourse + ' (₹3,000/mo)');
       totalFee += 3000;
-    } else if (primaryCourse.includes('Physics + Chemistry') || primaryCourse.includes('Package')) {
-      items.push('Physics & Chemistry Combined (₹3,000/mo)');
-      totalFee += 3000;
-      academicCount = 2;
-    } else if (primaryCourse.includes('Physics')) {
-      items.push('Physics (₹1,500/mo)');
+      hasAcademic = true;
+    } else if (primaryCourse.includes('Physics') || primaryCourse.includes('Chemistry')) {
+      items.push(primaryCourse + ' (₹1,500/mo)');
       totalFee += 1500;
-      academicCount = 1;
-    } else if (primaryCourse.includes('Chemistry')) {
-      items.push('Chemistry (₹1,500/mo)');
-      totalFee += 1500;
-      academicCount = 1;
+      hasAcademic = true;
+    } else {
+      items.push(primaryCourse);
     }
 
     if (optCoding11 || primaryCourse.includes('Computer Science')) {
-      if (academicCount > 0) {
+      if (hasAcademic) {
         totalFee += 1500; // ₹500 OFF as add-on!
-        items.push('Computer Science & Coding (Add-on: ₹1,500/mo)');
+        items.push('Class 11/12 Computer Science & Coding (Add-on: ₹1,500/mo)');
         discountsApplied.push('₹500 OFF on Computer Science (Secondary Add-on Discount)');
       } else {
         totalFee += 2000; // Standalone ₹2,000
-        items.push('Computer Science & Coding (Standalone: ₹2,000/mo)');
+        items.push('Class 11/12 Computer Science & Coding (Standalone: ₹2,000/mo)');
       }
     }
   } 
@@ -233,14 +224,10 @@ function selectCourseAndScrollToForm(course, board, gradeNum) {
     if (boardInput) boardInput.value = `Target Board: ${board}`;
   }
 
-  // Auto check checkboxes based on grade or course type
+  // Auto check computer & coding add-on checkboxes based on grade or course type
   const gNum = gradeNum || (course ? parseInt((course.match(/Class\s*(\d+)/i) || [])[1], 10) : null);
   
   if (gNum === 11 || gNum === 12) {
-    const phys = document.getElementById('subjectPhysics');
-    const chem = document.getElementById('subjectChemistry');
-    if (phys) phys.checked = true;
-    if (chem) chem.checked = true;
     if (course && (course.toLowerCase().includes('computer') || course.toLowerCase().includes('coding'))) {
       const coding11 = document.getElementById('addonCoding11');
       if (coding11) coding11.checked = true;
