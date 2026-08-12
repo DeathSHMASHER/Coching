@@ -17,8 +17,6 @@ router.post('/apply', async (req, res) => {
     }
 
     await connectDB();
-    const isDbReady = mongoose.connection.readyState === 1;
-
     const appId = `ADM-${Math.floor(100 + Math.random() * 900)}`;
 
     const payload = {
@@ -33,14 +31,13 @@ router.post('/apply', async (req, res) => {
       appliedAt: new Date()
     };
 
-    if (isDbReady) {
+    if (process.env.MONGODB_URI) {
       const newApp = new Admission(payload);
       await newApp.save();
       console.log(`✅ [MongoDB Saved] Admission application ${appId} saved directly to MongoDB Atlas!`);
     } else {
       payload._id = 'adm_' + Date.now();
       mockData.admissions.unshift(payload);
-      console.warn(`⚠️ [Mock Memory Warning] Database not connected. Saved ${appId} in temporary memory.`);
     }
 
     // Automatically send email notification to shahriyartaufik@gmail.com
@@ -67,27 +64,26 @@ router.post('/apply', async (req, res) => {
 router.get('/status/:query', async (req, res) => {
   try {
     await connectDB();
-    const isDbReady = mongoose.connection.readyState === 1;
-
-    const queryStr = req.params.query.trim().toUpperCase();
-    const digitsOnly = queryStr.replace(/\D/g, '');
+    const rawQuery = req.params.query.trim();
+    const queryStr = rawQuery.toUpperCase();
+    const digitsOnly = rawQuery.replace(/\D/g, '');
     const isPhoneSearch = digitsOnly.length >= 7;
 
     let app = null;
 
-    if (isDbReady) {
+    if (process.env.MONGODB_URI) {
       // Priority 1: Exact uppercase / exact string match on applicationId, studentId, or email
       app = await Admission.findOne({
         $or: [
           { applicationId: queryStr },
           { studentIdAssigned: queryStr },
-          { email: req.params.query.trim().toLowerCase() }
+          { email: rawQuery.toLowerCase() }
         ]
       });
 
       // Priority 2: Case-insensitive regex and phone search fallback
       if (!app) {
-        const regex = new RegExp('^' + queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
+        const regex = new RegExp('^' + rawQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
         const orConditions = [
           { applicationId: regex },
           { studentIdAssigned: regex },
@@ -121,10 +117,9 @@ router.get('/status/:query', async (req, res) => {
 router.get('/all', async (req, res) => {
   try {
     await connectDB();
-    const isDbReady = mongoose.connection.readyState === 1;
     let list = [];
 
-    if (isDbReady) {
+    if (process.env.MONGODB_URI) {
       list = await Admission.find().sort({ appliedAt: -1 });
     } else {
       list = mockData.admissions;
@@ -147,12 +142,11 @@ router.put('/:id/status', async (req, res) => {
     }
 
     await connectDB();
-    const isDbReady = mongoose.connection.readyState === 1;
     let updatedApp = null;
     let assignedId = '';
     let uniquePassword = '';
 
-    if (!isDbReady) {
+    if (!process.env.MONGODB_URI) {
       updatedApp = mockData.admissions.find(a => a.applicationId.toUpperCase() === appId);
       if (!updatedApp) return res.status(404).json({ success: false, message: 'Application not found' });
 
@@ -275,9 +269,8 @@ router.delete('/:id', async (req, res) => {
   try {
     const appId = req.params.id.trim().toUpperCase();
     await connectDB();
-    const isDbReady = mongoose.connection.readyState === 1;
 
-    if (!isDbReady) {
+    if (!process.env.MONGODB_URI) {
       mockData.admissions = mockData.admissions.filter(a => a.applicationId.toUpperCase() !== appId && a._id !== appId);
     } else {
       let query = { applicationId: appId };
