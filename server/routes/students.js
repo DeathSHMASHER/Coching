@@ -151,6 +151,47 @@ router.put('/:studentId/password', async (req, res) => {
   }
 });
 
+// Admin: Update Student Fee Status & Due Amount
+router.put('/:studentId/fee', async (req, res) => {
+  try {
+    const cleanId = req.params.studentId.trim();
+    const { feeStatus, feeDueAmount } = req.body;
+
+    await connectDB();
+
+    const updateFields = {};
+    if (feeStatus) updateFields.feeStatus = feeStatus;
+    if (feeDueAmount !== undefined) updateFields.feeDueAmount = Number(feeDueAmount);
+
+    if (process.env.MONGODB_URI) {
+      let query = { studentId: new RegExp('^' + cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') };
+      if (mongoose.Types.ObjectId.isValid(cleanId)) {
+        query = { $or: [{ studentId: new RegExp('^' + cleanId + '$', 'i') }, { _id: cleanId }] };
+      }
+
+      const stu = await Student.findOneAndUpdate(
+        query,
+        updateFields,
+        { new: true }
+      );
+
+      if (!stu) return res.status(404).json({ success: false, message: 'Student record not found in database' });
+
+      return res.json({ success: true, message: `Fee status for ${stu.name} updated to ${stu.feeStatus} (Due: ₹${stu.feeDueAmount})!`, student: stu });
+    } else {
+      const stu = mockData.students.find(s => s.studentId.toLowerCase() === cleanId.toLowerCase() || s._id === cleanId);
+      if (!stu) return res.status(404).json({ success: false, message: 'Student profile not found' });
+
+      if (feeStatus) stu.feeStatus = feeStatus;
+      if (feeDueAmount !== undefined) stu.feeDueAmount = Number(feeDueAmount);
+
+      return res.json({ success: true, message: `Fee status for ${stu.name} updated to ${stu.feeStatus} (Due: ₹${stu.feeDueAmount})!`, student: stu });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error updating fee status: ' + err.message });
+  }
+});
+
 // Admin: Update Full Student Profile Information
 router.put('/:studentId', async (req, res) => {
   try {
