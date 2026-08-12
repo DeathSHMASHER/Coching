@@ -24,8 +24,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect Database
+// Connect Database & Ensure DB connection on serverless functions
 connectDB();
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (e) {
+    console.warn('Serverless DB Middleware Notice:', e.message);
+  }
+  next();
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);

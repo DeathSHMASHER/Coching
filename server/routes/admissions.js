@@ -40,9 +40,12 @@ router.post('/apply', async (req, res) => {
     }
 
     // Automatically send email notification to shahriyartaufik@gmail.com
-    sendAdmissionEmail(payload)
-      .then(resMail => console.log(`📧 [Gmail Dispatch] Sent application ${appId} email alert to ${process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'}:`, resMail))
-      .catch(errMail => console.error('Email dispatch error:', errMail));
+    try {
+      const resMail = await sendAdmissionEmail(payload);
+      console.log(`📧 [Gmail Dispatch] Sent application ${appId} email alert to ${process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'}:`, resMail);
+    } catch (errMail) {
+      console.error('Email dispatch error:', errMail);
+    }
 
     return res.json({
       success: true,
@@ -59,8 +62,10 @@ router.post('/apply', async (req, res) => {
 router.get('/status/:query', async (req, res) => {
   try {
     const queryStr = req.params.query.trim().toUpperCase();
-    const { useMock } = getDbState();
+    const digitsOnly = queryStr.replace(/\D/g, '');
+    const isPhoneSearch = digitsOnly.length >= 7;
 
+    const { useMock } = getDbState();
     let app = null;
 
     if (useMock) {
@@ -68,18 +73,19 @@ router.get('/status/:query', async (req, res) => {
         a.applicationId.toUpperCase() === queryStr ||
         (a.studentIdAssigned && a.studentIdAssigned.toUpperCase() === queryStr) ||
         a.email.toUpperCase() === queryStr ||
-        a.phone.replace(/\D/g, '').includes(queryStr.replace(/\D/g, ''))
+        (isPhoneSearch && a.phone.replace(/\D/g, '').includes(digitsOnly))
       );
     } else {
       const regex = new RegExp('^' + queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
-      app = await Admission.findOne({
-        $or: [
-          { applicationId: regex },
-          { studentIdAssigned: regex },
-          { email: regex },
-          { phone: new RegExp(queryStr.replace(/\D/g, ''), 'i') }
-        ]
-      });
+      const orConditions = [
+        { applicationId: regex },
+        { studentIdAssigned: regex },
+        { email: regex }
+      ];
+      if (isPhoneSearch) {
+        orConditions.push({ phone: new RegExp(digitsOnly, 'i') });
+      }
+      app = await Admission.findOne({ $or: orConditions });
     }
 
     if (!app) {
@@ -218,14 +224,18 @@ router.put('/:id/status', async (req, res) => {
     }
 
     if (status === 'Approved') {
-      sendStudentCredentialsEmail({
-        studentEmail: updatedApp.email,
-        name: updatedApp.name,
-        studentId: assignedId || updatedApp.studentIdAssigned,
-        password: uniquePassword || updatedApp.assignedPassword,
-        course: updatedApp.targetCourse
-      }).then(resEmail => console.log(`📧 [Student Credential Dispatch] Sent to ${updatedApp.email}:`, resEmail))
-        .catch(errEmail => console.error('Student credential dispatch error:', errEmail));
+      try {
+        const resEmail = await sendStudentCredentialsEmail({
+          studentEmail: updatedApp.email,
+          name: updatedApp.name,
+          studentId: assignedId || updatedApp.studentIdAssigned,
+          password: uniquePassword || updatedApp.assignedPassword,
+          course: updatedApp.targetCourse
+        });
+        console.log(`📧 [Student Credential Dispatch] Sent to ${updatedApp.email}:`, resEmail);
+      } catch (errEmail) {
+        console.error('Student credential dispatch error:', errEmail);
+      }
     }
 
     return res.json({
