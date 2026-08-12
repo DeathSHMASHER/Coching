@@ -16,7 +16,9 @@ router.post('/apply', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, Email, Phone, and Target Course are required.' });
     }
 
-    const { useMock } = getDbState();
+    await connectDB();
+    const isDbReady = mongoose.connection.readyState === 1;
+
     const appId = `ADM-${Math.floor(100 + Math.random() * 900)}`;
 
     const payload = {
@@ -31,12 +33,14 @@ router.post('/apply', async (req, res) => {
       appliedAt: new Date()
     };
 
-    if (useMock) {
-      payload._id = 'adm_' + Date.now();
-      mockData.admissions.unshift(payload);
-    } else {
+    if (isDbReady) {
       const newApp = new Admission(payload);
       await newApp.save();
+      console.log(`✅ [MongoDB Saved] Admission application ${appId} saved directly to MongoDB Atlas!`);
+    } else {
+      payload._id = 'adm_' + Date.now();
+      mockData.admissions.unshift(payload);
+      console.warn(`⚠️ [Mock Memory Warning] Database not connected. Saved ${appId} in temporary memory.`);
     }
 
     // Automatically send email notification to shahriyartaufik@gmail.com
@@ -54,28 +58,24 @@ router.post('/apply', async (req, res) => {
       emailNotified: process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error submitting admission application' });
+    console.error('Error submitting application:', err);
+    res.status(500).json({ success: false, message: 'Error submitting admission application: ' + err.message });
   }
 });
 
 // GET /api/admissions/status/:query - Track Application Status
 router.get('/status/:query', async (req, res) => {
   try {
+    await connectDB();
+    const isDbReady = mongoose.connection.readyState === 1;
+
     const queryStr = req.params.query.trim().toUpperCase();
     const digitsOnly = queryStr.replace(/\D/g, '');
     const isPhoneSearch = digitsOnly.length >= 7;
 
-    const { useMock } = getDbState();
     let app = null;
 
-    if (useMock) {
-      app = mockData.admissions.find(a =>
-        a.applicationId.toUpperCase() === queryStr ||
-        (a.studentIdAssigned && a.studentIdAssigned.toUpperCase() === queryStr) ||
-        a.email.toUpperCase() === queryStr ||
-        (isPhoneSearch && a.phone.replace(/\D/g, '').includes(digitsOnly))
-      );
-    } else {
+    if (isDbReady) {
       const regex = new RegExp('^' + queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
       const orConditions = [
         { applicationId: regex },
@@ -86,6 +86,13 @@ router.get('/status/:query', async (req, res) => {
         orConditions.push({ phone: new RegExp(digitsOnly, 'i') });
       }
       app = await Admission.findOne({ $or: orConditions });
+    } else {
+      app = mockData.admissions.find(a =>
+        a.applicationId.toUpperCase() === queryStr ||
+        (a.studentIdAssigned && a.studentIdAssigned.toUpperCase() === queryStr) ||
+        a.email.toUpperCase() === queryStr ||
+        (isPhoneSearch && a.phone.replace(/\D/g, '').includes(digitsOnly))
+      );
     }
 
     if (!app) {
@@ -101,13 +108,14 @@ router.get('/status/:query', async (req, res) => {
 // GET /api/admissions/all - Admin Fetch All Applications
 router.get('/all', async (req, res) => {
   try {
-    const { useMock } = getDbState();
+    await connectDB();
+    const isDbReady = mongoose.connection.readyState === 1;
     let list = [];
 
-    if (useMock) {
-      list = mockData.admissions;
-    } else {
+    if (isDbReady) {
       list = await Admission.find().sort({ appliedAt: -1 });
+    } else {
+      list = mockData.admissions;
     }
 
     return res.json({ success: true, count: list.length, applications: list });
@@ -126,12 +134,13 @@ router.put('/:id/status', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
-    const { useMock } = getDbState();
+    await connectDB();
+    const isDbReady = mongoose.connection.readyState === 1;
     let updatedApp = null;
     let assignedId = '';
     let uniquePassword = '';
 
-    if (useMock) {
+    if (!isDbReady) {
       updatedApp = mockData.admissions.find(a => a.applicationId.toUpperCase() === appId);
       if (!updatedApp) return res.status(404).json({ success: false, message: 'Application not found' });
 
@@ -253,9 +262,10 @@ router.put('/:id/status', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const appId = req.params.id.trim().toUpperCase();
-    const { useMock } = getDbState();
+    await connectDB();
+    const isDbReady = mongoose.connection.readyState === 1;
 
-    if (useMock) {
+    if (!isDbReady) {
       mockData.admissions = mockData.admissions.filter(a => a.applicationId.toUpperCase() !== appId && a._id !== appId);
     } else {
       let query = { applicationId: appId };
