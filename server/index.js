@@ -59,7 +59,7 @@ app.get('/admin-portal', (req, res) => res.sendFile(path.join(publicPath, 'admin
 
 // Fallback to index.html for SPA client-side routing
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api')) {
+  if (req.path && typeof req.path === 'string' && req.path.startsWith('/api')) {
     return res.status(404).json({ success: false, message: 'API Endpoint Not Found' });
   }
   res.sendFile(path.join(publicPath, 'index.html'));
