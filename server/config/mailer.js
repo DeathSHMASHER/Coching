@@ -149,7 +149,7 @@ async function sendAdmissionEmail(admission) {
     subject: subject,
     htmlContent: htmlContent,
     fromName: 'Admission Cell Jigyassa',
-    preferredProvider: 'resend'
+    preferredProvider: 'smtp'
   });
 }
 

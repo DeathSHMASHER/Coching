@@ -76,16 +76,28 @@ router.get('/status/:query', async (req, res) => {
     let app = null;
 
     if (isDbReady) {
-      const regex = new RegExp('^' + queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
-      const orConditions = [
-        { applicationId: regex },
-        { studentIdAssigned: regex },
-        { email: regex }
-      ];
-      if (isPhoneSearch) {
-        orConditions.push({ phone: new RegExp(digitsOnly, 'i') });
+      // Priority 1: Exact uppercase / exact string match on applicationId, studentId, or email
+      app = await Admission.findOne({
+        $or: [
+          { applicationId: queryStr },
+          { studentIdAssigned: queryStr },
+          { email: req.params.query.trim().toLowerCase() }
+        ]
+      });
+
+      // Priority 2: Case-insensitive regex and phone search fallback
+      if (!app) {
+        const regex = new RegExp('^' + queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
+        const orConditions = [
+          { applicationId: regex },
+          { studentIdAssigned: regex },
+          { email: regex }
+        ];
+        if (isPhoneSearch) {
+          orConditions.push({ phone: new RegExp(digitsOnly, 'i') });
+        }
+        app = await Admission.findOne({ $or: orConditions });
       }
-      app = await Admission.findOne({ $or: orConditions });
     } else {
       app = mockData.admissions.find(a =>
         a.applicationId.toUpperCase() === queryStr ||
