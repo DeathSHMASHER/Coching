@@ -148,8 +148,8 @@ async function sendAdmissionEmail(admission) {
     to: adminEmail,
     subject: subject,
     htmlContent: htmlContent,
-    fromName: 'Jigyasa Admissions Alert',
-    preferredProvider: 'smtp'
+    fromName: 'Admission Cell Jigyassa',
+    preferredProvider: 'resend'
   });
 }
 
