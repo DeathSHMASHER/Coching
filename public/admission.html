@@ -134,7 +134,7 @@
             </div>
             <div class="form-group">
               <label class="form-label"><i class="fa-solid fa-book-open"></i> Primary Selected Program *</label>
-              <select id="admCourse" class="form-control" onchange="updateMultiCourseSummary()" required>
+              <select id="admCourse" class="form-control" onchange="renderDynamicRecommendations()" required>
                 <option value="">Select Primary Program</option>
                 <option value="Class 5 Foundation (All Core Subjects)">Class 5 Foundation (All Core Subjects)</option>
                 <option value="Class 6 Foundation (All Core Subjects)">Class 6 Foundation (All Core Subjects)</option>
@@ -154,22 +154,13 @@
             </div>
           </div>
 
-          <!-- MULTI-COURSE COMPUTER & CODING ADD-ON SELECTION -->
-          <div class="form-group mb-2" style="background:rgba(255,255,255,0.03);padding:1rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
-            <label class="form-label c-gold mb-1" style="font-weight:700;"><i class="fa-solid fa-code"></i> Optional Computer Science &amp; Coding Specialization Add-ons:</label>
-            <div style="display:flex;flex-direction:column;gap:0.65rem;" class="mt-1">
-              <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
-                <input type="checkbox" id="addonCoding11" onchange="updateMultiCourseSummary()" />
-                <span>Add <strong>Class 11 &amp; 12 Computer Science / Python</strong> — <span class="chip chip-green text-xs" style="font-weight:800;">₹500 OFF! Only ₹1,500/mo as Add-on</span></span>
-              </label>
-              <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
-                <input type="checkbox" id="addonCoding9" onchange="updateMultiCourseSummary()" />
-                <span>Add <strong>Class 9 &amp; 10 Computer / Coding Class</strong> — <span class="chip chip-green text-xs" style="font-weight:800;">₹200 OFF! Only ₹1,000/mo as Add-on</span></span>
-              </label>
-              <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" class="text-sm">
-                <input type="checkbox" id="addonCoding" onchange="updateMultiCourseSummary()" />
-                <span>Add <strong>Class 5–8 Python Coding Specialization</strong> (+₹1,000 / month)</span>
-              </label>
+          <!-- DYNAMIC CLASS-TARGETED COURSE & ADD-ON RECOMMENDATIONS -->
+          <div id="dynamicAddonWrapper" class="form-group mb-2 hidden" style="background:rgba(255,255,255,0.03);padding:1.1rem;border-radius:var(--r-sm);border:1.5px solid rgba(255,183,3,0.35);">
+            <label class="form-label c-gold mb-1" style="font-weight:800;font-size:0.95rem;">
+              <i class="fa-solid fa-sparkles c-gold"></i> Recommended Course Upgrades &amp; Add-ons For Your Selected Class:
+            </label>
+            <div id="dynamicAddonContainer" style="display:flex;flex-direction:column;gap:0.75rem;" class="mt-1">
+              <!-- Dynamically rendered based on selected class -->
             </div>
           </div>
 

@@ -23,6 +23,12 @@ async function handleStudentLogin(e) {
   const pass = passEl ? passEl.value.trim() : '';
 
   if (!id || !pass) {
+    if (!id && idEl) idEl.classList.add('shake-error');
+    if (!pass && passEl) passEl.classList.add('shake-error');
+    setTimeout(() => {
+      if (idEl) idEl.classList.remove('shake-error');
+      if (passEl) passEl.classList.remove('shake-error');
+    }, 800);
     showToast('Please enter User ID and Password', 'error');
     return;
   }
@@ -56,6 +62,12 @@ async function handleStudentLogin(e) {
     showToast('Welcome back, ' + _currentStudent.name + '!', 'success');
     _renderStudentDash();
   } else {
+    if (idEl) idEl.classList.add('shake-error');
+    if (passEl) passEl.classList.add('shake-error');
+    setTimeout(() => {
+      if (idEl) idEl.classList.remove('shake-error');
+      if (passEl) passEl.classList.remove('shake-error');
+    }, 800);
     showToast(res.message || 'Invalid User ID or Password', 'error');
   }
 }

@@ -4,8 +4,7 @@ const mongoose = require('mongoose');
 const Admission = require('../models/Admission');
 const Student = require('../models/Student');
 const { getDbState } = require('../config/db');
-const { mockData } = require('../config/mockStore');
-const { sendAdmissionEmail } = require('../config/mailer');
+const { sendAdmissionEmail, sendStudentCredentialsEmail } = require('../config/mailer');
 
 // POST /api/admissions/apply - Public Submit Admission Application
 router.post('/apply', async (req, res) => {
@@ -39,14 +38,16 @@ router.post('/apply', async (req, res) => {
       await newApp.save();
     }
 
-    // Automatically send email notification to admin email
-    sendAdmissionEmail(payload).catch(err => console.error('Email dispatch background error:', err));
+    // Automatically send email notification to shahriyartaufik@gmail.com
+    sendAdmissionEmail(payload)
+      .then(resMail => console.log(`📧 [Gmail Dispatch] Sent application ${appId} email alert to ${process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'}:`, resMail))
+      .catch(errMail => console.error('Email dispatch error:', errMail));
 
     return res.json({
       success: true,
       message: 'Admission application submitted successfully!',
       applicationId: appId,
-      emailNotified: process.env.ADMIN_EMAIL || 'admin@coaching.com'
+      emailNotified: process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error submitting admission application' });
@@ -63,19 +64,25 @@ router.get('/status/:query', async (req, res) => {
 
     if (useMock) {
       app = mockData.admissions.find(a =>
-        a.applicationId.toUpperCase() === queryStr || a.email.toUpperCase() === queryStr
+        a.applicationId.toUpperCase() === queryStr ||
+        (a.studentIdAssigned && a.studentIdAssigned.toUpperCase() === queryStr) ||
+        a.email.toUpperCase() === queryStr ||
+        a.phone.replace(/\D/g, '').includes(queryStr.replace(/\D/g, ''))
       );
     } else {
+      const regex = new RegExp('^' + queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
       app = await Admission.findOne({
         $or: [
-          { applicationId: new RegExp('^' + queryStr + '$', 'i') },
-          { email: new RegExp('^' + queryStr + '$', 'i') }
+          { applicationId: regex },
+          { studentIdAssigned: regex },
+          { email: regex },
+          { phone: new RegExp(queryStr.replace(/\D/g, ''), 'i') }
         ]
       });
     }
 
     if (!app) {
-      return res.status(404).json({ success: false, message: 'No application found with provided ID or Email.' });
+      return res.status(404).json({ success: false, message: 'No application record found matching provided ID, Student ID, or Email.' });
     }
 
     return res.json({ success: true, application: app });
@@ -210,7 +217,14 @@ router.put('/:id/status', async (req, res) => {
     }
 
     if (status === 'Approved') {
-      console.log(`[Gmail Service] Forwarded student credentials email to ${updatedApp.email}: Student ID: ${assignedId} | Password: ${uniquePassword}`);
+      sendStudentCredentialsEmail({
+        studentEmail: updatedApp.email,
+        name: updatedApp.name,
+        studentId: assignedId || updatedApp.studentIdAssigned,
+        password: uniquePassword || updatedApp.assignedPassword,
+        course: updatedApp.targetCourse
+      }).then(resEmail => console.log(`📧 [Student Credential Dispatch] Sent to ${updatedApp.email}:`, resEmail))
+        .catch(errEmail => console.error('Student credential dispatch error:', errEmail));
     }
 
     return res.json({

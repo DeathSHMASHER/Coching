@@ -21,96 +21,143 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Update fee calculation summary when checkboxes are toggled
+// Render Dynamic Class-Targeted Course Recommendations
+function renderDynamicRecommendations() {
+  const primaryCourse = document.getElementById('admCourse') ? document.getElementById('admCourse').value : '';
+  const wrapper = document.getElementById('dynamicAddonWrapper');
+  const container = document.getElementById('dynamicAddonContainer');
+
+  if (!wrapper || !container) return;
+
+  if (!primaryCourse) {
+    wrapper.classList.add('hidden');
+    container.innerHTML = '';
+    updateMultiCourseSummary();
+    return;
+  }
+
+  // Preserve existing checked states if re-rendering
+  const checkedIds = new Set();
+  container.querySelectorAll('input[type=checkbox]:checked').forEach(cb => checkedIds.add(cb.id));
+
+  let html = '';
+  const isClass11or12 = primaryCourse.includes('11') || primaryCourse.includes('12');
+  const isClass9or10 = primaryCourse.includes('9') || primaryCourse.includes('10');
+  const isClass5to8 = primaryCourse.includes('5') || primaryCourse.includes('6') || primaryCourse.includes('7') || primaryCourse.includes('8');
+
+  if (isClass11or12) {
+    const isClass11 = primaryCourse.includes('11');
+    const isClass12 = primaryCourse.includes('12');
+    const clsName = isClass11 ? 'Class 11' : isClass12 ? 'Class 12' : 'Class 11/12';
+
+    if (primaryCourse.includes('Physics') && !primaryCourse.includes('Combined') && !primaryCourse.includes('Both')) {
+      html += `
+        <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
+          <input type="checkbox" id="recCombineBoth" data-price="1500" data-name="${clsName} Chemistry (Combined Physics + Chemistry)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
+          <span><i class="fa-solid fa-flask c-cyan"></i> Upgrade &amp; Add <strong>${clsName} Chemistry</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹1,500/mo (Combine Both for ₹3,000/mo)</span></span>
+        </label>
+      `;
+    } else if (primaryCourse.includes('Chemistry') && !primaryCourse.includes('Combined') && !primaryCourse.includes('Both')) {
+      html += `
+        <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
+          <input type="checkbox" id="recCombineBoth" data-price="1500" data-name="${clsName} Physics (Combined Physics + Chemistry)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
+          <span><i class="fa-solid fa-atom c-gold"></i> Upgrade &amp; Add <strong>${clsName} Physics</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹1,500/mo (Combine Both for ₹3,000/mo)</span></span>
+        </label>
+      `;
+    }
+
+    // Always offer Class 11/12 Computer Science Add-on for Class 11/12
+    html += `
+      <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
+        <input type="checkbox" id="recCoding11" data-price="1500" data-name="Class 11 & 12 Computer Science / Python" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCoding11') ? 'checked' : ''} />
+        <span><i class="fa-solid fa-code c-cyan"></i> Add <strong>Class 11 &amp; 12 Computer Science / Python</strong> — <span class="chip chip-green text-xs" style="font-weight:800;">₹500 OFF! Only ₹1,500/mo as Add-on</span></span>
+      </label>
+    `;
+  } else if (isClass9or10) {
+    html += `
+      <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
+        <input type="checkbox" id="recCoding9" data-price="1000" data-name="Class 9 & 10 Computer / Coding Class" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCoding9') ? 'checked' : ''} />
+        <span><i class="fa-solid fa-laptop-code c-cyan"></i> Add <strong>Class 9 &amp; 10 Computer / Coding Class</strong> — <span class="chip chip-green text-xs" style="font-weight:800;">₹200 OFF! Only ₹1,000/mo as Add-on</span></span>
+      </label>
+    `;
+  } else if (isClass5to8) {
+    html += `
+      <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
+        <input type="checkbox" id="recCodingBasic" data-price="1000" data-name="Class 5–8 Python Coding Specialization" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCodingBasic') ? 'checked' : ''} />
+        <span><i class="fa-solid fa-code c-gold"></i> Add <strong>Class 5–8 Python Coding Specialization</strong> (+₹1,000 / month)</span>
+      </label>
+    `;
+  }
+
+  if (html) {
+    container.innerHTML = html;
+    wrapper.classList.remove('hidden');
+  } else {
+    wrapper.classList.add('hidden');
+    container.innerHTML = '';
+  }
+
+  updateMultiCourseSummary();
+}
+window.renderDynamicRecommendations = renderDynamicRecommendations;
+
+// Update live course fee calculation breakdown
 function updateMultiCourseSummary() {
   const primaryCourse = document.getElementById('admCourse') ? document.getElementById('admCourse').value : '';
-  const optPhysics = document.getElementById('subjectPhysics') ? document.getElementById('subjectPhysics').checked : false;
-  const optChemistry = document.getElementById('subjectChemistry') ? document.getElementById('subjectChemistry').checked : false;
-  const optCoding11 = document.getElementById('addonCoding11') ? document.getElementById('addonCoding11').checked : false;
-  const optCoding9 = document.getElementById('addonCoding9') ? document.getElementById('addonCoding9').checked : false;
-  const optCodingBasic = document.getElementById('addonCoding') ? document.getElementById('addonCoding').checked : false;
   const summaryBox = document.getElementById('multiCourseSummary');
 
   if (!summaryBox) return;
+
+  if (!primaryCourse) {
+    summaryBox.innerHTML = '';
+    return;
+  }
 
   let totalFee = 0;
   let items = [];
   let discountsApplied = [];
 
-  const isClass11or12 = primaryCourse.includes('11') || primaryCourse.includes('12');
-  const isClass9or10 = primaryCourse.includes('9') || primaryCourse.includes('10');
-  const isClass5to8 = primaryCourse.includes('5') || primaryCourse.includes('6') || primaryCourse.includes('7') || primaryCourse.includes('8');
-
-  // CLASS 11 & 12 SPECIFIC LOGIC
-  if (isClass11or12) {
-    let hasAcademic = false;
-    if (primaryCourse.includes('Combined') || primaryCourse.includes('Both')) {
-      items.push(primaryCourse + ' (₹3,000/mo)');
-      totalFee += 3000;
-      hasAcademic = true;
-    } else if (primaryCourse.includes('Physics') || primaryCourse.includes('Chemistry')) {
-      items.push(primaryCourse + ' (₹1,500/mo)');
-      totalFee += 1500;
-      hasAcademic = true;
+  // 1. Base Primary Course Fee
+  if (primaryCourse.includes('Combined') || primaryCourse.includes('Both')) {
+    items.push(primaryCourse + ' (₹3,000/mo)');
+    totalFee += 3000;
+  } else if (primaryCourse.includes('Physics') || primaryCourse.includes('Chemistry')) {
+    items.push(primaryCourse + ' (₹1,500/mo)');
+    totalFee += 1500;
+  } else if (primaryCourse.includes('9') || primaryCourse.includes('10')) {
+    if (primaryCourse.includes('Computer Science')) {
+      items.push(primaryCourse + ' (₹1,200/mo)');
+      totalFee += 1200;
     } else {
-      items.push(primaryCourse);
-    }
-
-    if (optCoding11 || primaryCourse.includes('Computer Science')) {
-      if (hasAcademic) {
-        totalFee += 1500; // ₹500 OFF as add-on!
-        items.push('Class 11/12 Computer Science & Coding (Add-on: ₹1,500/mo)');
-        discountsApplied.push('₹500 OFF on Computer Science (Secondary Add-on Discount)');
-      } else {
-        totalFee += 2000; // Standalone ₹2,000
-        items.push('Class 11/12 Computer Science & Coding (Standalone: ₹2,000/mo)');
-      }
-    }
-  } 
-  // CLASS 9 & 10 SPECIFIC LOGIC
-  else if (isClass9or10) {
-    let hasAcademic = false;
-    if (!primaryCourse.includes('Computer Science')) {
       items.push(primaryCourse + ' (₹4,000/mo)');
       totalFee += 4000;
-      hasAcademic = true;
     }
-
-    if (optCoding9 || primaryCourse.includes('Computer Science')) {
-      if (hasAcademic) {
-        totalFee += 1000; // ₹200 OFF as add-on!
-        items.push('Computer / Coding (Add-on: ₹1,000/mo)');
-        discountsApplied.push('₹200 OFF on Computer / Coding (Secondary Add-on Discount)');
-      } else {
-        totalFee += 1200; // Standalone ₹1,200
-        items.push('Computer / Coding (Standalone: ₹1,200/mo)');
-      }
-    }
-  }
-  // CLASS 5 TO 8 SPECIFIC LOGIC
-  else if (isClass5to8) {
-    if (primaryCourse.includes('5') || primaryCourse.includes('6')) {
-      items.push(primaryCourse + ' (₹1,500/mo)');
-      totalFee += 1500;
-    } else {
-      items.push(primaryCourse + ' (₹2,500/mo)');
-      totalFee += 2500;
-    }
-
-    if (optCodingBasic || primaryCourse.includes('Python Coding')) {
-      items.push('Python Coding Specialization (+₹1,000/mo)');
-      totalFee += 1000;
-    }
-  } 
-  // GENERAL FALLBACK
-  else if (primaryCourse) {
-    items.push(primaryCourse);
+  } else if (primaryCourse.includes('5') || primaryCourse.includes('6')) {
+    items.push(primaryCourse + ' (₹1,500/mo)');
+    totalFee += 1500;
+  } else if (primaryCourse.includes('7') || primaryCourse.includes('8')) {
+    items.push(primaryCourse + ' (₹2,500/mo)');
+    totalFee += 2500;
+  } else {
+    items.push(primaryCourse + ' (₹2,000/mo)');
     totalFee += 2000;
   }
 
-  if (!items.length) {
-    summaryBox.innerHTML = '';
-    return;
+  // 2. Add Checked Dynamic Recommendation Add-ons
+  const container = document.getElementById('dynamicAddonContainer');
+  if (container) {
+    container.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
+      const price = Number(cb.dataset.price) || 0;
+      const name = cb.dataset.name || 'Add-on';
+      totalFee += price;
+      items.push(`${name} (+₹${price}/mo)`);
+
+      if (cb.id === 'recCoding11') {
+        discountsApplied.push('₹500 OFF on Class 11/12 Computer Science');
+      } else if (cb.id === 'recCoding9') {
+        discountsApplied.push('₹200 OFF on Class 9/10 Computer Class');
+      }
+    });
   }
 
   summaryBox.innerHTML = `
@@ -134,12 +181,14 @@ async function handleAdmission(e) {
   e.preventDefault();
 
   const primaryCourse = document.getElementById('admCourse').value;
-  const addCoding = document.getElementById('addonCoding') ? document.getElementById('addonCoding').checked : false;
-  const addScience = document.getElementById('addonScience') ? document.getElementById('addonScience').checked : false;
-
   let fullCourseList = [primaryCourse];
-  if (addCoding) fullCourseList.push('Python Coding Specialization (Add-on)');
-  if (addScience) fullCourseList.push('Computer Science / Science Booster (Add-on)');
+
+  const container = document.getElementById('dynamicAddonContainer');
+  if (container) {
+    container.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
+      if (cb.dataset.name) fullCourseList.push(`${cb.dataset.name} (Add-on)`);
+    });
+  }
 
   const payload = {
     name:               document.getElementById('admName').value.trim(),
@@ -164,6 +213,8 @@ async function handleAdmission(e) {
     document.getElementById('admissionSuccess').classList.remove('hidden');
     e.target.reset();
     if (document.getElementById('multiCourseSummary')) document.getElementById('multiCourseSummary').innerHTML = '';
+    const wrapper = document.getElementById('dynamicAddonWrapper');
+    if (wrapper) wrapper.classList.add('hidden');
     showToast('Application submitted! Reference ID: ' + res.applicationId);
     if (window._loadAdmissionsTable) window._loadAdmissionsTable();
   } else {
@@ -224,27 +275,8 @@ function selectCourseAndScrollToForm(course, board, gradeNum) {
     if (boardInput) boardInput.value = `Target Board: ${board}`;
   }
 
-  // Auto check computer & coding add-on checkboxes based on grade or course type
-  const gNum = gradeNum || (course ? parseInt((course.match(/Class\s*(\d+)/i) || [])[1], 10) : null);
-  
-  if (gNum === 11 || gNum === 12) {
-    if (course && (course.toLowerCase().includes('computer') || course.toLowerCase().includes('coding'))) {
-      const coding11 = document.getElementById('addonCoding11');
-      if (coding11) coding11.checked = true;
-    }
-  } else if (gNum === 9 || gNum === 10) {
-    if (course && (course.toLowerCase().includes('computer') || course.toLowerCase().includes('coding'))) {
-      const coding9 = document.getElementById('addonCoding9');
-      if (coding9) coding9.checked = true;
-    }
-  } else if (gNum >= 5 && gNum <= 8) {
-    if (course && (course.toLowerCase().includes('python') || course.toLowerCase().includes('coding'))) {
-      const coding = document.getElementById('addonCoding');
-      if (coding) coding.checked = true;
-    }
-  }
-
-  if (window.updateMultiCourseSummary) window.updateMultiCourseSummary();
+  // Trigger dynamic recommendation rendering and price calculation
+  if (window.renderDynamicRecommendations) window.renderDynamicRecommendations();
 
   const card = document.getElementById('applyFormCard');
   if (card) {
@@ -262,7 +294,12 @@ async function checkStatus() {
   if (!queryEl || !outEl) return;
   const q = queryEl.value.trim();
 
-  if (!q) { showToast('Please enter your Application ID or Email.', 'error'); return; }
+  if (!q) {
+    queryEl.classList.add('shake-error');
+    setTimeout(() => queryEl.classList.remove('shake-error'), 800);
+    showToast('Please enter your Application ID, Student ID, or Email.', 'error');
+    return;
+  }
 
   outEl.innerHTML = '<p class="text-muted text-sm mt-2"><i class="fa-solid fa-spinner fa-spin"></i> Checking status…</p>';
 
@@ -315,7 +352,9 @@ async function checkStatus() {
         `}
       </div>`;
   } else {
-    outEl.innerHTML = `<div class="status-result-card text-center card card-p2 mt-2"><i class="fa-solid fa-folder-open" style="font-size:2rem;color:var(--gold);margin-bottom:0.5rem;display:block;"></i><p class="text-muted text-sm">${res.message || 'No application record found with provided ID or Email.'}</p></div>`;
+    queryEl.classList.add('shake-error');
+    setTimeout(() => queryEl.classList.remove('shake-error'), 800);
+    outEl.innerHTML = `<div class="status-result-card text-center card card-p2 mt-2" style="border-color:#ef4444;"><i class="fa-solid fa-circle-xmark c-red" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i><p class="text-muted text-sm">${res.message || 'No application record found with provided Application ID, Student ID, or Email.'}</p></div>`;
   }
 }
 window.checkStatus = checkStatus;

@@ -88,12 +88,14 @@
 
       <div class="form-group mb-1">
         <label class="form-label"><i class="fa-solid fa-search"></i> Application ID or Registered Email *</label>
-        <div class="input-row">
-          <input id="portalStatusQuery" class="form-control" type="text" placeholder="e.g. ADM-901 or your email" />
-          <button class="btn btn-grad" onclick="checkStatus()">
-            <i class="fa-solid fa-magnifying-glass"></i> Check
-          </button>
-        </div>
+        <form onsubmit="event.preventDefault(); checkStatus();">
+          <div class="input-row">
+            <input id="portalStatusQuery" class="form-control" type="text" placeholder="e.g. ADM-901, STU-101, or email" onkeypress="if(event.key==='Enter'){event.preventDefault();checkStatus();}" />
+            <button type="submit" class="btn btn-grad">
+              <i class="fa-solid fa-magnifying-glass"></i> Check
+            </button>
+          </div>
+        </form>
       </div>
       <div id="portalStatusResult"></div>
     </div>
@@ -257,6 +259,7 @@
 </footer>
 
 <script src="/js/api.js"></script>
+<script src="/js/admission.js"></script>
 <script src="/js/studentPortal.js"></script>
 <script src="/js/app.js"></script>
 </body>

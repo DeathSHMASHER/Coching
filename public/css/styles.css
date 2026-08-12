@@ -1088,4 +1088,19 @@ textarea.form-control { resize: vertical; min-height: 115px; }
   }
 }
 
+/* =====================================================
+   INVALID INPUT SHAKE / VIBRATION ANIMATION
+   ===================================================== */
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-10px); }
+  40%, 80% { transform: translateX(10px); }
+}
+
+.shake-error {
+  animation: shakeError 0.5s ease-in-out !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.7) !important;
+}
+
 
