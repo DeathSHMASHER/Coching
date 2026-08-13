@@ -23,6 +23,38 @@ document.addEventListener('DOMContentLoaded', () => {
   _loadAdmissionCourseCatalog();
 });
 
+const courseOrderMap = {
+  'CRS-5': 1,
+  'CRS-6': 2,
+  'CRS-7': 3,
+  'CRS-8': 4,
+  'CRS-9': 5,
+  'CRS-10': 6,
+  'CRS-11-PHY': 7,
+  'CRS-11-MTH': 8,
+  'CRS-11-COMBO': 9,
+  'CRS-12-PHY': 10,
+  'CRS-12-MTH': 11,
+  'CRS-12-COMBO': 12,
+  'CRS-CS-9': 13,
+  'CRS-CS-10': 14
+};
+
+function getCourseSortWeight(c) {
+  if (c.courseId && courseOrderMap[c.courseId]) return courseOrderMap[c.courseId];
+  if (c.classes) {
+    if (c.classes.includes('5')) return 1;
+    if (c.classes.includes('6')) return 2;
+    if (c.classes.includes('7')) return 3;
+    if (c.classes.includes('8')) return 4;
+    if (c.classes.includes('9')) return 5;
+    if (c.classes.includes('10')) return 6;
+    if (c.classes.includes('11')) return 7;
+    if (c.classes.includes('12')) return 8;
+  }
+  return 99;
+}
+
 async function _loadAdmissionCourseCatalog() {
   const container = document.getElementById('coursesCatalogContainer');
   if (!container) return;
@@ -32,7 +64,10 @@ async function _loadAdmissionCourseCatalog() {
     return;
   }
 
-  container.innerHTML = res.courses.map(c => `
+  // Sort courses strictly in ascending order (Class 5 -> Class 12 -> Computer Science)
+  const sortedCourses = res.courses.sort((a, b) => getCourseSortWeight(a) - getCourseSortWeight(b));
+
+  container.innerHTML = sortedCourses.map(c => `
     <div class="card card-p2 reveal active mb-2" style="opacity:1;transform:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
         <span class="chip chip-cyan">${c.classes || 'All Classes'}</span>
