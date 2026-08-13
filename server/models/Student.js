@@ -10,7 +10,7 @@ const studentSchema = new mongoose.Schema({
   password: { type: String, required: true },
   admissionDate: { type: Date, default: Date.now },
   status: { type: String, default: 'Active' },
-  feeStatus: { type: String, enum: ['Paid', 'Pending', 'Partial'], default: 'Paid' },
+  feeStatus: { type: String, enum: ['Paid', 'Pending', 'Partial', 'Unpaid'], default: 'Paid' },
   feeDueAmount: { type: Number, default: 0 },
   feeDueDate: { type: String, default: 'N/A' }
 }, { timestamps: true });
