@@ -24,6 +24,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Netlify Serverless Function Path Normalization Middleware
+app.use((req, res, next) => {
+  if (req.url && req.url.startsWith('/.netlify/functions/api')) {
+    req.url = req.url.replace('/.netlify/functions/api', '/api');
+  }
+  next();
+});
+
 // Connect Database & Ensure DB connection on serverless functions
 connectDB();
 app.use(async (req, res, next) => {
@@ -35,17 +43,36 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// API Routes
+// API Routes (Mounted on both /api/route and /route for Netlify serverless compatibility)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/admissions', admissionsRoutes);
+app.use('/admissions', admissionsRoutes);
+
 app.use('/api/students', studentsRoutes);
+app.use('/students', studentsRoutes);
+
 app.use('/api/attendance', attendanceRoutes);
+app.use('/attendance', attendanceRoutes);
+
 app.use('/api/performance', performanceRoutes);
+app.use('/performance', performanceRoutes);
+
 app.use('/api/doubts', doubtsRoutes);
+app.use('/doubts', doubtsRoutes);
+
 app.use('/api/feedback', feedbackRoutes);
+app.use('/feedback', feedbackRoutes);
+
 app.use('/api/notices', noticesRoutes);
+app.use('/notices', noticesRoutes);
+
 app.use('/api/courses', coursesRoutes);
+app.use('/courses', coursesRoutes);
+
 app.use('/api/live-classes', liveClassesRoutes);
+app.use('/live-classes', liveClassesRoutes);
 
 // Health Check API
 app.get('/api/health', (req, res) => {
