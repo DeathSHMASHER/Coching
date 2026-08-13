@@ -117,6 +117,84 @@ function logoutStudent() {
   showToast('Logged out of Student Portal.');
 }
 
+// Helper: Compile raw phone or clipboard text into a clean Google Meet URL
+function compileMeetLink(input) {
+  if (!input) return 'https://meet.google.com';
+  let str = String(input).trim();
+
+  // Extract URL substring if full text copied from phone (e.g. "Join Meet: https://meet.google.com/xyz")
+  const urlMatch = str.match(/https?:\/\/[^\s]+/i);
+  if (urlMatch) {
+    str = urlMatch[0];
+  }
+
+  str = str.replace(/\s+/g, '');
+
+  if (/^https?:\/\//i.test(str)) return str;
+  if (/^meet\.google\.com/i.test(str) || /^google\.com\/meet/i.test(str)) return 'https://' + str;
+
+  const cleanCode = str.replace(/[^a-zA-Z0-9-]/g, '');
+  if (/^[a-z0-9]{3,4}-[a-z0-9]{3,4}-[a-z0-9]{3,4}$/i.test(cleanCode)) {
+    return 'https://meet.google.com/' + cleanCode;
+  }
+  if (/^[a-z0-9]{10}$/i.test(cleanCode)) {
+    const formatted = `${cleanCode.slice(0,3)}-${cleanCode.slice(3,7)}-${cleanCode.slice(7)}`;
+    return 'https://meet.google.com/' + formatted;
+  }
+  return 'https://' + str;
+}
+
+function _evalClassLiveStatus(dateStr, timeStr) {
+  try {
+    const now = new Date();
+    const parts = (timeStr || '').split('-');
+    if (parts.length < 2) return 'LIVE';
+
+    function parseTimeStr(tStr, baseDateStr) {
+      let t = tStr.trim();
+      let isPM = t.toLowerCase().includes('pm');
+      let isAM = t.toLowerCase().includes('am');
+      let clean = t.replace(/(am|pm)/gi, '').trim();
+      let [h, m] = clean.split(':').map(Number);
+      if (isNaN(m)) m = 0;
+      if (isPM && h < 12) h += 12;
+      if (isAM && h === 12) h = 0;
+
+      let d = baseDateStr ? new Date(baseDateStr + 'T00:00:00') : new Date();
+      d.setHours(h, m, 0, 0);
+      return d;
+    }
+
+    const startObj = parseTimeStr(parts[0], dateStr);
+    const endObj = parseTimeStr(parts[1], dateStr);
+
+    if (now > endObj) return 'ENDED';
+    if (now < startObj) return 'UPCOMING';
+    return 'LIVE';
+  } catch (e) {
+    return 'LIVE';
+  }
+}
+
+async function handleJoinLiveClass(classId, classTitle, rawMeetingLink) {
+  if (!_currentStudent) return;
+  const cleanUrl = compileMeetLink(rawMeetingLink);
+
+  try {
+    await apiRequest('/live-classes/join-log', 'POST', {
+      classId,
+      classTitle,
+      studentId: _currentStudent.studentId,
+      studentName: _currentStudent.name,
+      targetBatch: _currentStudent.batch || _currentStudent.course || 'General Batch'
+    });
+  } catch (e) {
+    console.warn('Could not log join timestamp:', e);
+  }
+
+  window.open(cleanUrl, '_blank');
+}
+
 // 0. TAILORED LIVE CLASSES & MEETING LINKS
 async function _loadStudentLiveClasses() {
   if (!_currentStudent) return;
@@ -136,28 +214,36 @@ async function _loadStudentLiveClasses() {
   }
 
   container.innerHTML = res.liveClasses.map(c => {
-    let cleanLink = (c.meetingLink || '').trim();
-    if (!cleanLink.startsWith('http://') && !cleanLink.startsWith('https://')) {
-      if (/^[a-z0-9]{3,4}-[a-z0-9]{3,4}-[a-z0-9]{3,4}$/i.test(cleanLink)) {
-        cleanLink = 'https://meet.google.com/' + cleanLink;
-      } else if (cleanLink.startsWith('meet.google.com/')) {
-        cleanLink = 'https://' + cleanLink;
-      } else {
-        cleanLink = 'https://' + cleanLink;
-      }
+    const cleanLink = compileMeetLink(c.meetingLink);
+    const liveState = _evalClassLiveStatus(c.date, c.time);
+
+    let statusChip = '';
+    let actionBtn = '';
+    let cardBg = '';
+
+    if (liveState === 'LIVE') {
+      statusChip = `<span class="chip chip-green"><i class="fa-solid fa-circle-dot fa-beat-fade c-emerald"></i> Live Class Now</span>`;
+      actionBtn = `<button onclick="handleJoinLiveClass('${c.classId}', '${c.title.replace(/'/g, "\\'")}', '${cleanLink}')" class="btn btn-grad btn-sm" style="box-shadow: 0 0 15px rgba(0,240,255,0.4);"><i class="fa-solid fa-right-to-bracket"></i> Join Live Meeting Class</button>`;
+      cardBg = 'border-color:var(--cyan);background:rgba(0,240,255,0.06);';
+    } else if (liveState === 'ENDED') {
+      statusChip = `<span class="chip chip-red" style="font-weight:700;"><i class="fa-solid fa-circle-xmark"></i> Class Over / Lecture Ended</span>`;
+      actionBtn = `<button class="btn btn-sm btn-outline text-muted" disabled style="opacity:0.55;cursor:not-allowed;border-color:#ef4444;color:#ef4444;"><i class="fa-solid fa-lock"></i> Class Over • Meeting Closed</button>`;
+      cardBg = 'border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.05);';
+    } else {
+      statusChip = `<span class="chip chip-amber"><i class="fa-solid fa-clock"></i> Starts at ${c.time}</span>`;
+      actionBtn = `<button class="btn btn-sm btn-outline" disabled style="opacity:0.65;cursor:not-allowed;"><i class="fa-solid fa-clock"></i> Session Starts at ${c.time}</button>`;
+      cardBg = 'border-color:rgba(255,183,3,0.3);background:rgba(255,183,3,0.04);';
     }
 
     return `
-      <div class="card card-p2 mb-2" style="border-color:var(--cyan);background:rgba(0,240,255,0.05);">
+      <div class="card card-p2 mb-2" style="${cardBg}">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
-          <span class="chip chip-cyan"><i class="fa-solid fa-video"></i> Live Class • ${c.targetBatch}</span>
-          <span class="chip chip-green"><i class="fa-solid fa-clock"></i> ${c.date} • ${c.time}</span>
+          <span class="chip chip-cyan"><i class="fa-solid fa-video"></i> ${c.targetBatch}</span>
+          ${statusChip}
         </div>
         <h3 class="font-heading mb-1" style="font-size:1.15rem;font-weight:800;">${c.title}</h3>
-        <p class="text-xs text-muted mb-2"><i class="fa-solid fa-user-ninja c-gold"></i> Instructor: <strong>${c.instructor}</strong> ${c.notes ? '• ' + c.notes : ''}</p>
-        <a href="${cleanLink}" target="_blank" class="btn btn-grad btn-sm">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i> Join Live Meeting Class
-        </a>
+        <p class="text-xs text-muted mb-2"><i class="fa-solid fa-clock c-gold"></i> Schedule: <strong>${c.date} • ${c.time}</strong> ${c.notes ? '• ' + c.notes : ''}</p>
+        ${actionBtn}
       </div>
     `;
   }).join('');
@@ -521,8 +607,9 @@ async function refreshStudentData() {
 }
 
 // Global Exports
-window.handleStudentLogin  = handleStudentLogin;
-window.logoutStudent       = logoutStudent;
-window.handleRaiseDoubt     = handleRaiseDoubt;
-window.refreshStudentData  = refreshStudentData;
+window.handleStudentLogin    = handleStudentLogin;
+window.logoutStudent         = logoutStudent;
+window.handleRaiseDoubt       = handleRaiseDoubt;
+window.refreshStudentData    = refreshStudentData;
+window.handleJoinLiveClass   = handleJoinLiveClass;
 

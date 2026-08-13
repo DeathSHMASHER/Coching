@@ -1,21 +1,56 @@
 const express = require('express');
 const router = express.Router();
 const LiveClass = require('../models/LiveClass');
+const LiveClassLog = require('../models/LiveClassLog');
 const Student = require('../models/Student');
-const { getDbState } = require('../config/db');
+const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+
+// Helper: Compile raw phone or clipboard text into a clean Google Meet URL
+function compileMeetLink(input) {
+  if (!input) return 'https://meet.google.com';
+  let str = String(input).trim();
+
+  // Extract URL substring if full text copied from phone (e.g. "Join Meet: https://meet.google.com/xyz")
+  const urlMatch = str.match(/https?:\/\/[^\s]+/i);
+  if (urlMatch) {
+    str = urlMatch[0];
+  }
+
+  // Remove internal spaces
+  str = str.replace(/\s+/g, '');
+
+  if (/^https?:\/\//i.test(str)) {
+    return str;
+  }
+
+  if (/^meet\.google\.com/i.test(str) || /^google\.com\/meet/i.test(str)) {
+    return 'https://' + str;
+  }
+
+  const cleanCode = str.replace(/[^a-zA-Z0-9-]/g, '');
+  if (/^[a-z0-9]{3,4}-[a-z0-9]{3,4}-[a-z0-9]{3,4}$/i.test(cleanCode)) {
+    return 'https://meet.google.com/' + cleanCode;
+  }
+
+  if (/^[a-z0-9]{10}$/i.test(cleanCode)) {
+    const formatted = `${cleanCode.slice(0,3)}-${cleanCode.slice(3,7)}-${cleanCode.slice(7)}`;
+    return 'https://meet.google.com/' + formatted;
+  }
+
+  return 'https://' + str;
+}
 
 // GET /api/live-classes: Fetch all scheduled live classes (Admin)
 router.get('/', async (req, res) => {
   try {
-    const { useMock } = getDbState();
+    await connectDB();
     let classes = [];
 
-    if (useMock) {
-      if (!mockData.liveClasses) mockData.liveClasses = [];
-      classes = mockData.liveClasses;
-    } else {
+    if (process.env.MONGODB_URI) {
       classes = await LiveClass.find().sort({ createdAt: -1 });
+    } else {
+      classes = mockData.liveClasses || [];
     }
 
     return res.json({ success: true, count: classes.length, liveClasses: classes });
@@ -28,17 +63,17 @@ router.get('/', async (req, res) => {
 router.get('/student/:studentId', async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { useMock } = getDbState();
+    await connectDB();
 
     let student = null;
     let allClasses = [];
 
-    if (useMock) {
+    if (process.env.MONGODB_URI) {
+      student = await Student.findOne({ studentId: new RegExp('^' + studentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+      allClasses = await LiveClass.find().sort({ createdAt: -1 });
+    } else {
       student = (mockData.students || []).find(s => s.studentId.toLowerCase() === studentId.toLowerCase());
       allClasses = mockData.liveClasses || [];
-    } else {
-      student = await Student.findOne({ studentId: new RegExp('^' + studentId + '$', 'i') });
-      allClasses = await LiveClass.find().sort({ createdAt: -1 });
     }
 
     if (!student) {
@@ -75,18 +110,8 @@ router.post('/schedule', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Title, Target Batch, and Meeting Link are required.' });
     }
 
-    const { useMock } = getDbState();
-
-    let cleanLink = meetingLink.trim();
-    if (!cleanLink.startsWith('http://') && !cleanLink.startsWith('https://')) {
-      if (/^[a-z0-9]{3,4}-[a-z0-9]{3,4}-[a-z0-9]{3,4}$/i.test(cleanLink)) {
-        cleanLink = 'https://meet.google.com/' + cleanLink;
-      } else if (cleanLink.startsWith('meet.google.com/')) {
-        cleanLink = 'https://' + cleanLink;
-      } else {
-        cleanLink = 'https://' + cleanLink;
-      }
-    }
+    await connectDB();
+    const cleanLink = compileMeetLink(meetingLink);
 
     const newClass = {
       classId: 'LIV-' + Date.now().toString().slice(-5),
@@ -100,11 +125,11 @@ router.post('/schedule', async (req, res) => {
       status: 'Upcoming'
     };
 
-    if (useMock) {
+    if (process.env.MONGODB_URI) {
+      await LiveClass.create(newClass);
+    } else {
       if (!mockData.liveClasses) mockData.liveClasses = [];
       mockData.liveClasses.unshift(newClass);
-    } else {
-      await LiveClass.create(newClass);
     }
 
     return res.json({
@@ -117,16 +142,86 @@ router.post('/schedule', async (req, res) => {
   }
 });
 
+// POST /api/live-classes/join-log: Student joins live class, log exact timestamp down to the second
+router.post('/join-log', async (req, res) => {
+  try {
+    const { classId, classTitle, studentId, studentName, targetBatch } = req.body;
+
+    if (!studentId || !classId) {
+      return res.status(400).json({ success: false, message: 'Student ID and Class ID are required.' });
+    }
+
+    await connectDB();
+
+    const now = new Date();
+    const joinedAtFormatted = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }) + ', ' + now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }); // e.g. "13 Aug 2026, 07:15:34 PM"
+
+    const logData = {
+      classId,
+      classTitle: classTitle || 'Live Class Session',
+      studentId: studentId.trim().toUpperCase(),
+      studentName: studentName || 'Registered Student',
+      targetBatch: targetBatch || 'General Batch',
+      joinedAtFormatted,
+      joinedAt: now
+    };
+
+    if (process.env.MONGODB_URI) {
+      const newLog = new LiveClassLog(logData);
+      await newLog.save();
+    } else {
+      if (!mockData.liveClassLogs) mockData.liveClassLogs = [];
+      mockData.liveClassLogs.unshift(logData);
+    }
+
+    return res.json({
+      success: true,
+      message: `Student join timestamp recorded at ${joinedAtFormatted}`,
+      log: logData
+    });
+  } catch (err) {
+    console.error('Error logging student join timestamp:', err);
+    res.status(500).json({ success: false, message: 'Error recording join timestamp' });
+  }
+});
+
+// GET /api/live-classes/join-logs: Admin / Mentor fetch all student join logs
+router.get('/join-logs', async (req, res) => {
+  try {
+    await connectDB();
+    let logs = [];
+
+    if (process.env.MONGODB_URI) {
+      logs = await LiveClassLog.find().sort({ joinedAt: -1 });
+    } else {
+      logs = mockData.liveClassLogs || [];
+    }
+
+    return res.json({ success: true, count: logs.length, logs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error fetching live class join logs' });
+  }
+});
+
 // DELETE /api/live-classes/:classId: Admin delete scheduled live class
 router.delete('/:classId', async (req, res) => {
   try {
     const { classId } = req.params;
-    const { useMock } = getDbState();
+    await connectDB();
 
-    if (useMock) {
-      mockData.liveClasses = (mockData.liveClasses || []).filter(c => c.classId !== classId);
-    } else {
+    if (process.env.MONGODB_URI) {
       await LiveClass.deleteOne({ classId });
+    } else {
+      mockData.liveClasses = (mockData.liveClasses || []).filter(c => c.classId !== classId);
     }
 
     return res.json({ success: true, message: 'Live class link removed successfully.' });

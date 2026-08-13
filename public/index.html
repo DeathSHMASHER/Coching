@@ -82,11 +82,11 @@
           Structured academic coaching for <strong>CBSE, ICSE &amp; West Bengal Board (WBBSE / WBCHSE)</strong> in Physics, Mathematics, Science &amp; Python Coding by <strong>Shahriyar Taufik</strong> (B.Tech ECS – KIIT University). We teach everything step-by-step from absolute scratch in simple, easy-to-understand language.
         </p>
 
-        <div class="hero-btns">
-          <a href="/student-portal.html" class="btn btn-grad btn-lg">
+        <div class="hero-btns" style="position: relative; z-index: 50;">
+          <a href="/student-portal.html" class="btn btn-grad btn-lg" style="position: relative; z-index: 60; cursor: pointer; touch-action: manipulation;">
             <i class="fa-solid fa-user-graduate"></i> Student Portal Login
           </a>
-          <a href="/admission.html" class="btn btn-primary btn-lg">
+          <a href="/admission.html" class="btn btn-primary btn-lg" style="position: relative; z-index: 60; cursor: pointer; touch-action: manipulation;">
             <i class="fa-solid fa-paper-plane"></i> View Courses &amp; Apply
           </a>
         </div>
@@ -398,41 +398,6 @@
         <div class="reviews-scroll" id="reviewsFeed">
           <p class="text-muted text-sm">Loading feedback…</p>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- REGISTERED STUDENTS DIRECTORY -->
-<section id="directory" class="section directory-section">
-  <div class="container">
-    <div class="section-head text-center reveal">
-      <div class="section-eyebrow"><i class="fa-solid fa-users"></i> Student Roster</div>
-      <h2 class="section-title">Registered Students Directory</h2>
-      <p class="section-sub center">Enrolled students, unique Student IDs, courses, and active enrollment status.</p>
-    </div>
-
-    <div class="card reveal">
-      <div class="table-toolbar">
-        <div class="search-wrap">
-          <i class="fa-solid fa-search"></i>
-          <input class="form-control" id="rosterSearch" type="text" placeholder="Filter by name, Student ID, or course…" oninput="filterRoster()" />
-        </div>
-        <div class="count-chip" id="rosterCount"><i class="fa-solid fa-users"></i> 0 Students</div>
-      </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Student ID</th>
-              <th>Name</th>
-              <th>Course</th>
-              <th>Batch</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="rosterBody"></tbody>
-        </table>
       </div>
     </div>
   </div>

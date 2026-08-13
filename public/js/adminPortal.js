@@ -90,26 +90,50 @@ function cancelAdminLogin() {
 // ---- LIVE CLASS SCHEDULER & MEETING LINK BROADCASTER ----
 async function loadLiveClassesAdmin() {
   const feed = document.getElementById('adminLiveClassesFeed');
-  if (!feed) return;
+  if (feed) {
+    const res = await apiRequest('/live-classes');
+    if (!res.success || !res.liveClasses || !res.liveClasses.length) {
+      feed.innerHTML = '<p class="text-muted text-sm">No live classes scheduled yet.</p>';
+    } else {
+      feed.innerHTML = res.liveClasses.map(c => `
+        <div class="card card-p2 mb-2">
+          <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
+            <span class="chip chip-cyan">${c.targetBatch}</span>
+            <button class="btn btn-sm btn-danger" onclick="deleteLiveClass('${c.classId}')">
+              <i class="fa-solid fa-trash"></i> Cancel Class
+            </button>
+          </div>
+          <h4 style="font-weight:700;">${c.title}</h4>
+          <p class="text-xs text-muted mb-1"><i class="fa-solid fa-clock"></i> Date: ${c.date} • ${c.time}</p>
+          <div class="mb-2 text-xs c-gold font-bold"><i class="fa-solid fa-link"></i> Link: <a href="${c.meetingLink}" target="_blank" class="c-cyan">${c.meetingLink}</a></div>
+        </div>
+      `).join('');
+    }
+  }
 
-  const res = await apiRequest('/live-classes');
-  if (!res.success || !res.liveClasses || !res.liveClasses.length) {
-    feed.innerHTML = '<p class="text-muted text-sm">No live classes scheduled yet.</p>';
+  loadLiveClassLogsAdmin();
+}
+
+async function loadLiveClassLogsAdmin() {
+  const body = document.getElementById('adminLiveClassLogsBody');
+  if (!body) return;
+
+  const res = await apiRequest('/live-classes/join-logs');
+  if (!res.success || !res.logs || !res.logs.length) {
+    body.innerHTML = '<tr><td colspan="4" class="text-center text-muted text-sm">No student join events logged yet.</td></tr>';
     return;
   }
 
-  feed.innerHTML = res.liveClasses.map(c => `
-    <div class="card card-p2 mb-2">
-      <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-        <span class="chip chip-cyan">${c.targetBatch}</span>
-        <button class="btn btn-sm btn-danger" onclick="deleteLiveClass('${c.classId}')">
-          <i class="fa-solid fa-trash"></i> Cancel Class
-        </button>
-      </div>
-      <h4 style="font-weight:700;">${c.title}</h4>
-      <p class="text-xs text-muted mb-1"><i class="fa-solid fa-clock"></i> Date: ${c.date} • ${c.time}</p>
-      <div class="mb-2 text-xs c-gold font-bold"><i class="fa-solid fa-link"></i> Link: <a href="${c.meetingLink}" target="_blank" class="c-cyan">${c.meetingLink}</a></div>
-    </div>
+  body.innerHTML = res.logs.map(l => `
+    <tr>
+      <td><span class="chip chip-gold" style="font-family:monospace;font-weight:700;"><i class="fa-solid fa-clock"></i> ${l.joinedAtFormatted || new Date(l.joinedAt).toLocaleString()}</span></td>
+      <td>
+        <div class="font-bold">${l.studentName}</div>
+        <div class="text-xs c-cyan">${l.studentId}</div>
+      </td>
+      <td class="text-sm font-bold">${l.classTitle}</td>
+      <td><span class="chip chip-cyan">${l.targetBatch}</span></td>
+    </tr>
   `).join('');
 }
 
@@ -899,9 +923,14 @@ function openFeeEditModal(studentId, currentStatus, currentDue) {
   const statusEl = document.getElementById('feeEditStatus');
   const dueEl = document.getElementById('feeEditDue');
 
+  let cleanStatus = currentStatus || 'Paid';
+  if (cleanStatus.includes('Paid')) cleanStatus = 'Paid';
+  else if (cleanStatus.includes('Partial')) cleanStatus = 'Partial';
+  else if (cleanStatus.includes('Unpaid') || cleanStatus.includes('Due')) cleanStatus = 'Unpaid';
+
   if (idEl) idEl.value = studentId;
-  if (statusEl) statusEl.value = currentStatus;
-  if (dueEl) dueEl.value = currentDue;
+  if (statusEl) statusEl.value = cleanStatus;
+  if (dueEl) dueEl.value = (currentDue !== undefined && currentDue !== null) ? currentDue : 0;
 
   const modal = document.getElementById('feeEditModal');
   if (modal) modal.classList.remove('hidden');
@@ -935,6 +964,7 @@ window.logoutAdmin                  = logoutAdmin;
 window.cancelAdminLogin             = cancelAdminLogin;
 window.refreshAdminData             = refreshAdminData;
 window.loadLiveClassesAdmin         = loadLiveClassesAdmin;
+window.loadLiveClassLogsAdmin       = loadLiveClassLogsAdmin;
 window.handleScheduleLiveClass      = handleScheduleLiveClass;
 window.deleteLiveClass              = deleteLiveClass;
 window.loadBatchStudentsForAttendance = loadBatchStudentsForAttendance;

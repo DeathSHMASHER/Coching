@@ -160,7 +160,13 @@ router.put('/:studentId/fee', async (req, res) => {
     await connectDB();
 
     const updateFields = {};
-    if (feeStatus) updateFields.feeStatus = feeStatus;
+    if (feeStatus) {
+      let cleanStatus = feeStatus;
+      if (feeStatus.includes('Paid')) cleanStatus = 'Paid';
+      else if (feeStatus.includes('Partial')) cleanStatus = 'Partial';
+      else if (feeStatus.includes('Unpaid') || feeStatus.includes('Due')) cleanStatus = 'Unpaid';
+      updateFields.feeStatus = cleanStatus;
+    }
     if (feeDueAmount !== undefined) updateFields.feeDueAmount = Number(feeDueAmount);
 
     if (process.env.MONGODB_URI) {

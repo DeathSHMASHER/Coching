@@ -423,6 +423,12 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   display: flex;
   align-items: center;
   position: relative;
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .hero-bg .blob {
@@ -431,10 +437,31 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   filter: blur(100px);
   opacity: 0.65;
   animation: blobPulse 8s ease-in-out infinite alternate;
+  pointer-events: none;
 }
 .blob-1 { width: 550px; height: 550px; background: rgba(59, 130, 246, 0.16); top: -160px; left: -160px; }
 .blob-2 { width: 600px; height: 600px; background: rgba(255, 183, 3, 0.12); top: 40px; right: -220px; animation-delay: 2s; }
 .blob-3 { width: 420px; height: 420px; background: rgba(16, 185, 129, 0.1); bottom: -110px; left: 32%; animation-delay: 4s; }
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 30;
+}
+
+.hero-btns .btn {
+  position: relative;
+  z-index: 35;
+  touch-action: manipulation;
+  cursor: pointer;
+}
 
 @keyframes blobPulse { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, -30px) scale(1.1); } }
 
