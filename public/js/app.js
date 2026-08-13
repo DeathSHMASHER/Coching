@@ -326,7 +326,7 @@ async function _loadDynamicCourses() {
   const track = document.getElementById('offeringsCarouselTrack');
   if (!track) return;
 
-  const res = await apiRequest('/courses');
+  const res = await apiRequest('/courses?t=' + Date.now());
   if (!res.success || !res.courses || !res.courses.length) {
     track.innerHTML = '<p class="text-muted text-sm" style="padding:1rem;">Course catalog offline.</p>';
     return;

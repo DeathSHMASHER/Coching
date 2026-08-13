@@ -59,7 +59,7 @@ async function _loadAdmissionCourseCatalog() {
   const container = document.getElementById('coursesCatalogContainer');
   if (!container) return;
 
-  const res = await apiRequest('/courses');
+  const res = await apiRequest('/courses?t=' + Date.now());
   if (!res.success || !res.courses || !res.courses.length) {
     return;
   }
@@ -69,6 +69,7 @@ async function _loadAdmissionCourseCatalog() {
   // Sort courses strictly in ascending order (Class 5 -> Class 12 -> Computer Science)
   const sortedCourses = res.courses.sort((a, b) => getCourseSortWeight(a) - getCourseSortWeight(b));
 
+  // Dynamically update course cards with live database prices and subjects
   container.innerHTML = sortedCourses.map(c => `
     <div class="card card-p2 reveal active mb-2" style="opacity:1;transform:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
@@ -85,6 +86,16 @@ async function _loadAdmissionCourseCatalog() {
       </a>
     </div>
   `).join('');
+
+  // Dynamically populate Application Form dropdown with live prices
+  const selectEl = document.getElementById('admCourse');
+  if (selectEl) {
+    const currentVal = selectEl.value;
+    selectEl.innerHTML = '<option value="">Select Primary Program</option>' + sortedCourses.map(c => `
+      <option value="${c.title}">${c.title} (₹${c.currentFee.toLocaleString()}/mo)</option>
+    `).join('');
+    if (currentVal) selectEl.value = currentVal;
+  }
 
   if (window.setupReveal) window.setupReveal();
   updateMultiCourseSummary();
