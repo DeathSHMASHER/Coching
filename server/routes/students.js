@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Student = require('../models/Student');
-const { getDbState } = require('../config/db');
+const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
 
 // Admin / Public Directory: Get all registered students with passwords for Admin
