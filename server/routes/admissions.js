@@ -10,7 +10,7 @@ const { sendAdmissionEmail, sendStudentCredentialsEmail } = require('../config/m
 // POST /api/admissions/apply - Public Submit Admission Application
 router.post('/apply', async (req, res) => {
   try {
-    const { name, email, phone, targetCourse, previousPercentage, message } = req.body;
+    const { name, email, phone, targetCourse, previousPercentage, message, calculatedFee, selectedSubjects } = req.body;
 
     if (!name || !email || !phone || !targetCourse) {
       return res.status(400).json({ success: false, message: 'Name, Email, Phone, and Target Course are required.' });
@@ -25,6 +25,8 @@ router.post('/apply', async (req, res) => {
       email,
       phone,
       targetCourse,
+      calculatedFee: calculatedFee || 0,
+      selectedSubjects: Array.isArray(selectedSubjects) ? selectedSubjects : [],
       previousPercentage: previousPercentage || 0,
       message: message || '',
       status: 'Pending',

@@ -127,6 +127,14 @@ async function sendAdmissionEmail(admission) {
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffb703; font-weight: bold;">${admission.targetCourse}</td>
         </tr>
         <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Calculated Monthly Fee:</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #a855f7; font-weight: bold; font-size: 16px;">₹${admission.calculatedFee ? Number(admission.calculatedFee).toLocaleString() : 'N/A'} / month</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Opted Programs &amp; Add-ons:</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #00f0ff; font-weight: bold;">${Array.isArray(admission.selectedSubjects) && admission.selectedSubjects.length ? admission.selectedSubjects.join(' + ') : admission.targetCourse}</td>
+        </tr>
+        <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Previous Score (%):</td>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff;">${admission.previousPercentage || 'N/A'}%</td>
         </tr>

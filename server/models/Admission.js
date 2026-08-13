@@ -6,6 +6,8 @@ const admissionSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phone: { type: String, required: true },
   targetCourse: { type: String, required: true },
+  calculatedFee: { type: Number, default: 0 },
+  selectedSubjects: { type: Array, default: [] },
   previousPercentage: { type: Number, default: 0 },
   message: { type: String, default: '' },
   status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },

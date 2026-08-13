@@ -182,6 +182,8 @@ function renderDynamicRecommendations() {
 window.renderDynamicRecommendations = renderDynamicRecommendations;
 
 let _fetchedCourses = [];
+let _lastCalculatedTotalFee = 0;
+let _lastCalculatedItems = [];
 
 // Update live course fee calculation breakdown
 function updateMultiCourseSummary() {
@@ -192,11 +194,14 @@ function updateMultiCourseSummary() {
 
   if (!primaryCourse) {
     summaryBox.innerHTML = '';
+    _lastCalculatedTotalFee = 0;
+    _lastCalculatedItems = [];
     return;
   }
 
   let totalFee = 0;
   let items = [];
+  let discountsApplied = [];
 
   // 1. Base Primary Course Fee - Look up live course from _fetchedCourses database array
   let primaryPrice = 0;
@@ -245,11 +250,14 @@ function updateMultiCourseSummary() {
     });
   }
 
+  _lastCalculatedTotalFee = totalFee;
+  _lastCalculatedItems = [...items];
+
   summaryBox.innerHTML = `
     <div style="background:rgba(255,183,3,0.06);border:1.5px solid var(--gold);padding:1rem;border-radius:var(--r-sm);" class="mt-2 mb-2">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
         <span class="text-xs text-muted font-bold"><i class="fa-solid fa-calculator c-gold"></i> Live Course Fee Calculation Breakdown:</span>
-        <span class="chip chip-purple font-bold" style="font-size:1.05rem;">Total Monthly Fee: ₹${totalFee} / mo</span>
+        <span class="chip chip-purple font-bold" style="font-size:1.05rem;">Total Monthly Fee: ₹${totalFee.toLocaleString()} / mo</span>
       </div>
       <div class="text-sm font-bold c-gold mb-1">${items.join(' + ')}</div>
       ${discountsApplied.length ? `
@@ -275,13 +283,20 @@ async function handleAdmission(e) {
     });
   }
 
+  const userMsg = document.getElementById('admMsg').value.trim();
+  const combinedMsg = userMsg 
+    ? `${userMsg} | Total Fee: ₹${_lastCalculatedTotalFee}/mo | Opted Items: ${_lastCalculatedItems.join(', ')}`
+    : `Total Monthly Fee: ₹${_lastCalculatedTotalFee}/mo | Opted Items: ${_lastCalculatedItems.join(', ')}`;
+
   const payload = {
     name:               document.getElementById('admName').value.trim(),
     email:              document.getElementById('admEmail').value.trim(),
     phone:              document.getElementById('admPhone').value.trim(),
-    targetCourse:       fullCourseList.join(' + '),
+    targetCourse:       fullCourseList.join(' + ') + (_lastCalculatedTotalFee ? ` [Total Fee: ₹${_lastCalculatedTotalFee}/mo]` : ''),
     previousPercentage: document.getElementById('admMarks').value || 0,
-    message:            document.getElementById('admMsg').value.trim()
+    message:            combinedMsg,
+    calculatedFee:      _lastCalculatedTotalFee,
+    selectedSubjects:   _lastCalculatedItems
   };
 
   const btn = e.target.querySelector('[type=submit]');
