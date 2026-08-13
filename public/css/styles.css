@@ -618,27 +618,48 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .form-control {
   width: 100%;
   padding: 0.9rem 1.15rem;
-  background: var(--bg-input) !important;
+  background: #090e1a !important;
   border: 1.5px solid rgba(255,255,255,0.15) !important;
   border-radius: var(--r-sm);
   color: #ffffff !important;
   transition: all var(--t-fast) var(--ease);
   outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
 }
+
+/* Mobile Chrome / Safari Autofill Override - Prevents White Background Boxes */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #090e1a inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+  border: 1.5px solid rgba(255,255,255,0.15) !important;
+}
+
 .form-control:focus {
   border-color: var(--gold) !important;
   box-shadow: 0 0 0 3px rgba(255, 183, 3, 0.2) !important;
 }
 
 select.form-control {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1.1rem center;
-  padding-right: 2.6rem;
+  background-color: #090e1a !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1.1rem center !important;
+  padding-right: 2.6rem !important;
   cursor: pointer;
+  color: #ffffff !important;
 }
-select.form-control option { background: #090e1a; color: #ffffff; }
-textarea.form-control { resize: vertical; min-height: 115px; }
+select.form-control option { background: #090e1a !important; color: #ffffff !important; }
+textarea.form-control { resize: vertical; min-height: 115px; background: #090e1a !important; color: #ffffff !important; }
 
 .input-row { display: flex; gap: 0.9rem; }
 .input-row .form-control { flex: 1; }
@@ -661,6 +682,9 @@ textarea.form-control { resize: vertical; min-height: 115px; }
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   margin-bottom: 2rem;
   overflow-x: auto;
+  flex-wrap: nowrap !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .tab-btn {
@@ -1075,6 +1099,8 @@ textarea.form-control { resize: vertical; min-height: 115px; }
   .form-control {
     font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
     padding: 0.75rem 0.95rem;
+    background: #090e1a !important;
+    color: #ffffff !important;
   }
   .data-table th, .data-table td {
     padding: 0.75rem 0.6rem;
