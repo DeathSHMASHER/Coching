@@ -64,6 +64,8 @@ async function _loadAdmissionCourseCatalog() {
     return;
   }
 
+  _fetchedCourses = res.courses;
+
   // Sort courses strictly in ascending order (Class 5 -> Class 12 -> Computer Science)
   const sortedCourses = res.courses.sort((a, b) => getCourseSortWeight(a) - getCourseSortWeight(b));
 
@@ -85,6 +87,7 @@ async function _loadAdmissionCourseCatalog() {
   `).join('');
 
   if (window.setupReveal) window.setupReveal();
+  updateMultiCourseSummary();
 }
 
 // Render Dynamic Class-Targeted Course Recommendations
@@ -167,6 +170,8 @@ function renderDynamicRecommendations() {
 }
 window.renderDynamicRecommendations = renderDynamicRecommendations;
 
+let _fetchedCourses = [];
+
 // Update live course fee calculation breakdown
 function updateMultiCourseSummary() {
   const primaryCourse = document.getElementById('admCourse') ? document.getElementById('admCourse').value : '';
@@ -181,33 +186,36 @@ function updateMultiCourseSummary() {
 
   let totalFee = 0;
   let items = [];
-  let discountsApplied = [];
 
-  // 1. Base Primary Course Fee
-  if (primaryCourse.includes('Combined') || primaryCourse.includes('Both')) {
-    items.push(primaryCourse + ' (₹3,000/mo)');
-    totalFee += 3000;
-  } else if (primaryCourse.includes('Physics') || primaryCourse.includes('Chemistry')) {
-    items.push(primaryCourse + ' (₹1,500/mo)');
-    totalFee += 1500;
-  } else if (primaryCourse.includes('9') || primaryCourse.includes('10')) {
-    if (primaryCourse.includes('Computer Science')) {
-      items.push(primaryCourse + ' (₹1,200/mo)');
-      totalFee += 1200;
-    } else {
-      items.push(primaryCourse + ' (₹4,000/mo)');
-      totalFee += 4000;
-    }
-  } else if (primaryCourse.includes('5') || primaryCourse.includes('6')) {
-    items.push(primaryCourse + ' (₹1,500/mo)');
-    totalFee += 1500;
-  } else if (primaryCourse.includes('7') || primaryCourse.includes('8')) {
-    items.push(primaryCourse + ' (₹2,500/mo)');
-    totalFee += 2500;
+  // 1. Base Primary Course Fee - Look up live course from _fetchedCourses database array
+  let primaryPrice = 0;
+  const matched = _fetchedCourses.find(c =>
+    c.title.toLowerCase() === primaryCourse.toLowerCase() ||
+    primaryCourse.toLowerCase().includes(c.title.toLowerCase()) ||
+    c.title.toLowerCase().includes(primaryCourse.toLowerCase())
+  );
+
+  if (matched && matched.currentFee !== undefined) {
+    primaryPrice = matched.currentFee;
   } else {
-    items.push(primaryCourse + ' (₹2,000/mo)');
-    totalFee += 2000;
+    // Fallback logic if _fetchedCourses is not loaded yet
+    if (primaryCourse.includes('Combined') || primaryCourse.includes('Both') || primaryCourse.includes('Package')) {
+      primaryPrice = 3500;
+    } else if (primaryCourse.includes('Physics') || primaryCourse.includes('Mathematics')) {
+      primaryPrice = 1500;
+    } else if (primaryCourse.includes('9') || primaryCourse.includes('10')) {
+      primaryPrice = primaryCourse.includes('Computer') ? 1200 : 4000;
+    } else if (primaryCourse.includes('5') || primaryCourse.includes('6')) {
+      primaryPrice = 1500;
+    } else if (primaryCourse.includes('7') || primaryCourse.includes('8')) {
+      primaryPrice = 2500;
+    } else {
+      primaryPrice = 2000;
+    }
   }
+
+  items.push(`${primaryCourse} (₹${primaryPrice.toLocaleString()}/mo)`);
+  totalFee += primaryPrice;
 
   // 2. Add Checked Dynamic Recommendation Add-ons
   const container = document.getElementById('dynamicAddonContainer');
