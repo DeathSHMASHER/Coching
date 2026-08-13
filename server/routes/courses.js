@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Course = require('../models/Course');
-const { getDbState } = require('../config/db');
+const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
 
 const DEFAULT_COURSES = [
@@ -11,7 +11,7 @@ const DEFAULT_COURSES = [
     title: 'Class 5 Foundation (All Core Subjects)',
     category: 'Class 5-8',
     classes: 'Class 5',
-    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer'],
+    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'],
     description: 'Comprehensive core subject foundation for CBSE, ICSE & West Bengal Board (WBBSE). Taught 100% from absolute basics!',
     originalFee: 2000,
     currentFee: 1500,
@@ -25,7 +25,7 @@ const DEFAULT_COURSES = [
     title: 'Class 6 Foundation (All Core Subjects)',
     category: 'Class 5-8',
     classes: 'Class 6',
-    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer'],
+    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'],
     description: 'Structured middle-school academic excellence for CBSE, ICSE & West Bengal Board. Zero prior prerequisites needed.',
     originalFee: 2000,
     currentFee: 1500,
@@ -39,7 +39,7 @@ const DEFAULT_COURSES = [
     title: 'Class 7 Advanced Foundation (All Core Subjects)',
     category: 'Class 5-8',
     classes: 'Class 7',
-    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer'],
+    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'],
     description: 'Deep academic concept building for CBSE, ICSE & West Bengal Board students.',
     originalFee: 3000,
     currentFee: 2500,
@@ -53,7 +53,7 @@ const DEFAULT_COURSES = [
     title: 'Class 8 Advanced Foundation (All Core Subjects)',
     category: 'Class 5-8',
     classes: 'Class 8',
-    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'Computer'],
+    subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'],
     description: 'High-school preparation program for CBSE, ICSE & West Bengal Board (WBBSE).',
     originalFee: 3000,
     currentFee: 2500,
@@ -124,7 +124,7 @@ const DEFAULT_COURSES = [
     category: 'Class 11-12',
     classes: 'Class 11',
     subjects: ['Physics', 'Mathematics'],
-    description: 'Combined Science & Math double mastery package for Class 11 Board exams.',
+    description: 'Combined Physics & Math double mastery package for Class 11 Board exams.',
     originalFee: 4000,
     currentFee: 3500,
     billingPeriod: 'per month (Both Subjects)',
@@ -171,106 +171,106 @@ const DEFAULT_COURSES = [
     currentFee: 3500,
     billingPeriod: 'per month (Both Subjects)',
     timings: '7:30 PM - 10:00 PM',
-    highlights: ['Physics + Maths Combined', 'Board Exam Revision', 'Full Mentor Support'],
+    highlights: ['Physics + Maths Combined', 'Board Exam Drills', '1-on-1 Mentorship'],
     isPopular: true
   },
   {
-    courseId: 'CRS-PYT',
-    title: 'Extra Optional: Python Coding Specialization',
+    courseId: 'CRS-CS-9',
+    title: 'Computer Science Class 9 (Python & Logic)',
     category: 'Computer Science & Coding',
-    classes: 'Class 5 to 12',
-    subjects: ['Python', 'Logic Building', 'Problem Solving', 'Projects'],
-    description: 'No prior coding background needed! Taught 100% from absolute basics in easy-to-understand language. Hands-on coding projects.',
-    originalFee: 1000,
+    classes: 'Class 9',
+    subjects: ['Computer Science', 'Python Coding'],
+    description: 'No prior coding needed! Fundamentals of Python, logic building, algorithms & ICSE/CBSE exam drills.',
+    originalFee: 1200,
     currentFee: 1000,
-    billingPeriod: 'per month (2 Classes / wk)',
-    timings: 'Weekend Flexible Slots',
-    highlights: ['Zero Prior Coding Knowledge Needed', 'Taught 100% From Scratch', 'Easy & Project-Based'],
+    billingPeriod: 'per month (Add-on: ₹1,000 | Standalone: ₹1,200)',
+    timings: 'Weekend Live Sessions (Sat & Sun)',
+    highlights: ['100% Practical Hands-on Coding', 'ICSE/CBSE Practical Exam Prep', 'Certificate of Completion'],
     isPopular: true
   },
   {
-    courseId: 'CRS-CS-910',
-    title: 'Computer Science Class 9 & 10',
+    courseId: 'CRS-CS-10',
+    title: 'Computer Science Class 10 (Python Specialization)',
     category: 'Computer Science & Coding',
-    classes: 'Class 9 & 10',
-    subjects: ['Computer Science', 'Programming Basics'],
-    description: 'Build strong computer science basics from ground up for CBSE/ICSE/WBBSE exams. No prior experience required.',
-    originalFee: 2000,
-    currentFee: 1500,
-    billingPeriod: 'per month',
-    timings: 'Flexible Evening Slots',
-    highlights: ['Basics To Advanced', 'Coding Fundamentals', 'School Exam Booster'],
-    isPopular: false
-  },
-  {
-    courseId: 'CRS-CS-1112',
-    title: 'Computer Science Class 11 & 12',
-    category: 'Computer Science & Coding',
-    classes: 'Class 11 & 12',
-    subjects: ['Python', 'Data Structures', 'Algorithms', 'OOPs'],
-    description: 'Advanced Python programming, Data Structures & Board practical guidance (CBSE/ISC/WBCHSE). Step-by-step guidance.',
-    originalFee: 2500,
-    currentFee: 2000,
-    billingPeriod: 'per month',
-    timings: 'Flexible Evening Slots',
-    highlights: ['Python & Data Structures', 'Algorithms & OOPs', 'Board Practical Guidance'],
+    classes: 'Class 10',
+    subjects: ['Computer Science', 'Python Coding'],
+    description: 'Advanced Python logic, data structures, loops, functions, file handling & board practical project solving.',
+    originalFee: 1200,
+    currentFee: 1000,
+    billingPeriod: 'per month (Add-on: ₹1,000 | Standalone: ₹1,200)',
+    timings: 'Weekend Live Sessions (Sat & Sun)',
+    highlights: ['Full Board Project Drills', '1-on-1 Code Debugging', 'Certificate of Completion'],
     isPopular: true
   }
 ];
 
-// GET /api/courses: Fetch all courses
+// Seed DB helper
+async function seedDefaultCourses() {
+  try {
+    await connectDB();
+    if (process.env.MONGODB_URI) {
+      for (const item of DEFAULT_COURSES) {
+        await Course.findOneAndUpdate(
+          { courseId: item.courseId },
+          { $set: item },
+          { upsert: true, new: true }
+        );
+      }
+    }
+  } catch (err) {
+    console.warn('Could not seed default courses:', err.message);
+  }
+}
+
+// GET /api/courses: Fetch all active courses
 router.get('/', async (req, res) => {
   try {
-    const { useMock } = getDbState();
+    await connectDB();
     let courses = [];
 
-    if (useMock) {
-      if (!mockData.courses || !mockData.courses.length) {
+    if (process.env.MONGODB_URI) {
+      courses = await Course.find().sort({ courseId: 1 });
+      if (!courses || courses.length === 0) {
+        await seedDefaultCourses();
+        courses = await Course.find().sort({ courseId: 1 });
+      }
+    } else {
+      if (!mockData.courses || mockData.courses.length === 0) {
         mockData.courses = [...DEFAULT_COURSES];
       }
       courses = mockData.courses;
-    } else {
-      courses = await Course.find().sort({ createdAt: 1 });
-      if (!courses.length) {
-        courses = await Course.insertMany(DEFAULT_COURSES);
-      }
     }
 
     return res.json({ success: true, count: courses.length, courses });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error fetching course list: ' + err.message });
+    return res.status(500).json({ success: false, message: 'Error fetching courses: ' + err.message });
   }
 });
 
-// POST /api/courses/create: Admin create new course manually
-router.post('/create', async (req, res) => {
+// GET /api/courses/:courseId: Fetch single course by ID
+router.get('/:courseId', async (req, res) => {
   try {
-    const { courseId, title, category, classes, subjects, description, originalFee, currentFee, billingPeriod, timings } = req.body;
-    const { useMock } = getDbState();
+    const { courseId } = req.params;
+    await connectDB();
+    let course = null;
 
-    const newCourse = {
-      courseId: courseId || 'CRS-' + Date.now(),
-      title,
-      category: category || 'General',
-      classes: classes || 'Class 5 to 12',
-      subjects: Array.isArray(subjects) ? subjects : (subjects ? subjects.split(',') : []),
-      description: description || '',
-      originalFee: Number(originalFee) || 2000,
-      currentFee: Number(currentFee) || 1500,
-      billingPeriod: billingPeriod || 'per month',
-      timings: timings || '7:30 PM - 10:00 PM',
-      isPopular: false
-    };
-
-    if (useMock) {
-      mockData.courses.push(newCourse);
+    if (process.env.MONGODB_URI) {
+      let query = { courseId: courseId };
+      if (/^[0-9a-fA-F]{24}$/.test(courseId)) {
+        query = { $or: [{ courseId }, { _id: courseId }] };
+      }
+      course = await Course.findOne(query);
     } else {
-      await Course.create(newCourse);
+      course = (mockData.courses || []).find(c => c.courseId === courseId || c._id === courseId);
     }
 
-    return res.json({ success: true, message: 'New course created successfully in catalog!', course: newCourse });
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    return res.json({ success: true, course });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Error creating course: ' + err.message });
+    return res.status(500).json({ success: false, message: 'Error fetching course: ' + err.message });
   }
 });
 
@@ -278,29 +278,18 @@ router.post('/create', async (req, res) => {
 router.put('/:courseId', async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { currentFee, originalFee, title, description, timings } = req.body;
+    const { currentFee, originalFee, title, description, timings, subjects } = req.body;
+    await connectDB();
 
-    const { useMock } = getDbState();
+    const updateData = {};
+    if (currentFee !== undefined) updateData.currentFee = Number(currentFee);
+    if (originalFee !== undefined) updateData.originalFee = Number(originalFee);
+    if (title) updateData.title = title.trim();
+    if (description) updateData.description = description.trim();
+    if (timings) updateData.timings = timings.trim();
+    if (Array.isArray(subjects)) updateData.subjects = subjects;
 
-    if (useMock) {
-      const crs = mockData.courses.find(c => c.courseId === courseId || c._id === courseId);
-      if (!crs) return res.status(404).json({ success: false, message: 'Course not found' });
-
-      if (currentFee !== undefined) crs.currentFee = Number(currentFee);
-      if (originalFee !== undefined) crs.originalFee = Number(originalFee);
-      if (title) crs.title = title;
-      if (description) crs.description = description;
-      if (timings) crs.timings = timings;
-
-      return res.json({ success: true, message: 'Course updated successfully!', course: crs });
-    } else {
-      const updateData = {};
-      if (currentFee !== undefined) updateData.currentFee = Number(currentFee);
-      if (originalFee !== undefined) updateData.originalFee = Number(originalFee);
-      if (title) updateData.title = title;
-      if (description) updateData.description = description;
-      if (timings) updateData.timings = timings;
-
+    if (process.env.MONGODB_URI) {
       let query = { courseId: courseId };
       if (/^[0-9a-fA-F]{24}$/.test(courseId)) {
         query = { $or: [{ courseId }, { _id: courseId }] };
@@ -312,11 +301,65 @@ router.put('/:courseId', async (req, res) => {
         { new: true }
       );
 
+      if (!crs) return res.status(404).json({ success: false, message: 'Course not found in database' });
+      return res.json({ success: true, message: `Course "${crs.title}" updated successfully!`, course: crs });
+    } else {
+      const crs = (mockData.courses || []).find(c => c.courseId === courseId || c._id === courseId);
       if (!crs) return res.status(404).json({ success: false, message: 'Course not found' });
-      return res.json({ success: true, message: 'Course updated successfully!', course: crs });
+
+      Object.assign(crs, updateData);
+      return res.json({ success: true, message: `Course "${crs.title}" updated successfully!`, course: crs });
     }
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error updating course: ' + err.message });
+  }
+});
+
+// PUT /api/courses/:courseId/subjects: Add or remove subjects from a course
+router.put('/:courseId/subjects', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { action, subject } = req.body; // action: 'add' or 'remove'
+    if (!subject) return res.status(400).json({ success: false, message: 'Subject name is required.' });
+
+    await connectDB();
+    const cleanSub = subject.trim();
+
+    if (process.env.MONGODB_URI) {
+      let query = { courseId: courseId };
+      if (/^[0-9a-fA-F]{24}$/.test(courseId)) {
+        query = { $or: [{ courseId }, { _id: courseId }] };
+      }
+
+      let crs = await Course.findOne(query);
+      if (!crs) return res.status(404).json({ success: false, message: 'Course not found' });
+
+      if (action === 'add') {
+        if (!crs.subjects.some(s => s.toLowerCase() === cleanSub.toLowerCase())) {
+          crs.subjects.push(cleanSub);
+        }
+      } else if (action === 'remove') {
+        crs.subjects = crs.subjects.filter(s => s.toLowerCase() !== cleanSub.toLowerCase());
+      }
+
+      await crs.save();
+      return res.json({ success: true, message: `Subject list updated for "${crs.title}"!`, subjects: crs.subjects, course: crs });
+    } else {
+      let crs = (mockData.courses || []).find(c => c.courseId === courseId || c._id === courseId);
+      if (!crs) return res.status(404).json({ success: false, message: 'Course not found' });
+
+      if (action === 'add') {
+        if (!crs.subjects.some(s => s.toLowerCase() === cleanSub.toLowerCase())) {
+          crs.subjects.push(cleanSub);
+        }
+      } else if (action === 'remove') {
+        crs.subjects = crs.subjects.filter(s => s.toLowerCase() !== cleanSub.toLowerCase());
+      }
+
+      return res.json({ success: true, message: `Subject list updated for "${crs.title}"!`, subjects: crs.subjects, course: crs });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error updating course subjects: ' + err.message });
   }
 });
 
@@ -324,18 +367,18 @@ router.put('/:courseId', async (req, res) => {
 router.delete('/:courseId', async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { useMock } = getDbState();
+    await connectDB();
 
-    if (useMock) {
-      mockData.courses = mockData.courses.filter(c => c.courseId !== courseId && c._id !== courseId);
-      return res.json({ success: true, message: 'Course removed from catalog successfully!' });
-    } else {
+    if (process.env.MONGODB_URI) {
       let query = { courseId: courseId };
       if (/^[0-9a-fA-F]{24}$/.test(courseId)) {
         query = { $or: [{ courseId }, { _id: courseId }] };
       }
 
       await Course.deleteOne(query);
+      return res.json({ success: true, message: 'Course removed from catalog successfully!' });
+    } else {
+      mockData.courses = (mockData.courses || []).filter(c => c.courseId !== courseId && c._id !== courseId);
       return res.json({ success: true, message: 'Course removed from catalog successfully!' });
     }
   } catch (err) {

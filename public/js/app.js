@@ -311,6 +311,215 @@ function applyFromCalculator(e, regTitle, board, gradeNum) {
 }
 window.applyFromCalculator = applyFromCalculator;
 
+// ---- DYNAMIC ROLLING SWIPE CAROUSEL & LIVE FEE SYNC ----
+let _carouselAutoScrollTimer = null;
+
+function scrollCourseCarousel(direction) {
+  const track = document.getElementById('offeringsCarouselTrack');
+  if (!track) return;
+  const scrollAmount = 320;
+  track.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+}
+window.scrollCourseCarousel = scrollCourseCarousel;
+
+async function _loadDynamicCourses() {
+  const track = document.getElementById('offeringsCarouselTrack');
+  if (!track) return;
+
+  const res = await apiRequest('/courses');
+  if (!res.success || !res.courses || !res.courses.length) {
+    track.innerHTML = '<p class="text-muted text-sm" style="padding:1rem;">Course catalog offline.</p>';
+    return;
+  }
+
+  const courses = res.courses;
+
+  // Smart Dynamic Grouping Logic based on LIVE Admin Prices:
+  const crs5 = courses.find(c => c.courseId === 'CRS-5') || { currentFee: 1500, subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'] };
+  const crs6 = courses.find(c => c.courseId === 'CRS-6') || { currentFee: 1500, subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'] };
+
+  const crs7 = courses.find(c => c.courseId === 'CRS-7') || { currentFee: 2500, subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'] };
+  const crs8 = courses.find(c => c.courseId === 'CRS-8') || { currentFee: 2500, subjects: ['English', 'Hindi', 'Mathematics', 'Science', 'Social Science', 'History', 'Geography', 'Computer'] };
+
+  const crs9 = courses.find(c => c.courseId === 'CRS-9') || { currentFee: 4000, subjects: ['Physics', 'Chemistry', 'Biology', 'Mathematics'] };
+  const crs10 = courses.find(c => c.courseId === 'CRS-10') || { currentFee: 4000, subjects: ['Physics', 'Chemistry', 'Biology', 'Mathematics'] };
+
+  const crs11Combo = courses.find(c => c.courseId === 'CRS-11-COMBO') || { currentFee: 3500 };
+  const crs12Combo = courses.find(c => c.courseId === 'CRS-12-COMBO') || { currentFee: 3500 };
+
+  const cardsHtml = [];
+
+  // Group 5 & 6
+  if (crs5.currentFee === crs6.currentFee) {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-purple mb-1">Class 5 &amp; 6</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Middle School Core</h3>
+        <p class="text-xs text-muted mb-2">${(crs5.subjects || []).join(', ')}. Step-by-step basic guidance.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs5.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  } else {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-purple mb-1">Class 5</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 5 Foundation</h3>
+        <p class="text-xs text-muted mb-2">${(crs5.subjects || []).join(', ')}.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs5.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-purple mb-1">Class 6</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 6 Foundation</h3>
+        <p class="text-xs text-muted mb-2">${(crs6.subjects || []).join(', ')}.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs6.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  }
+
+  // Group 7 & 8
+  if (crs7.currentFee === crs8.currentFee) {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-cyan mb-1">Class 7 &amp; 8</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Advanced Foundation</h3>
+        <p class="text-xs text-muted mb-2">${(crs7.subjects || []).join(', ')}. Pre-high school prep &amp; small batch care.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs7.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  } else {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-cyan mb-1">Class 7</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 7 Advanced Foundation</h3>
+        <p class="text-xs text-muted mb-2">${(crs7.subjects || []).join(', ')}.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs7.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-cyan mb-1">Class 8</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 8 Advanced Foundation</h3>
+        <p class="text-xs text-muted mb-2">${(crs8.subjects || []).join(', ')}.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs8.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  }
+
+  // Group 9 & 10
+  if (crs9.currentFee === crs10.currentFee) {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-green mb-1">Class 9 &amp; 10</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Board Science &amp; Maths</h3>
+        <p class="text-xs text-muted mb-2">Physics, Chemistry, Biology &amp; Maths for CBSE, ICSE &amp; Madhyamik.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs9.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-grad btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  } else {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-green mb-1">Class 9</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 9 Board Science &amp; Maths</h3>
+        <p class="text-xs text-muted mb-2">Physics, Chemistry, Biology &amp; Maths for CBSE, ICSE &amp; Madhyamik.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs9.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-grad btn-block btn-sm">Explore Courses</a>
+      </div>
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-green mb-1">Class 10</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 10 Board Science &amp; Maths</h3>
+        <p class="text-xs text-muted mb-2">Physics, Chemistry, Biology &amp; Maths for CBSE, ICSE &amp; Madhyamik.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee:</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs10.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-grad btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  }
+
+  // Group 11 & 12
+  if (crs11Combo.currentFee === crs12Combo.currentFee) {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-amber mb-1">Class 11 &amp; 12</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Board Physics &amp; Maths</h3>
+        <p class="text-xs text-muted mb-2">Calculus, Mechanics, Electrodynamics &amp; WBCHSE / CBSE / ISC Board booster.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee (Combo):</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs11Combo.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-primary btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  } else {
+    cardsHtml.push(`
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-amber mb-1">Class 11</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 11 Physics &amp; Maths</h3>
+        <p class="text-xs text-muted mb-2">Physics &amp; Mathematics for Class 11 Board exams.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee (Combo):</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs11Combo.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-primary btn-block btn-sm">Explore Courses</a>
+      </div>
+      <div class="card card-p2 carousel-card">
+        <div class="chip chip-amber mb-1">Class 12</div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;">Class 12 Physics &amp; Maths</h3>
+        <p class="text-xs text-muted mb-2">Physics &amp; Mathematics for Class 12 Board exams.</p>
+        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
+          <div class="text-xs text-muted">Tuition Fee (Combo):</div>
+          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹${crs12Combo.currentFee.toLocaleString()} <span class="text-xs text-dim">/ mo</span></div>
+        </div>
+        <a href="/admission.html" class="btn btn-primary btn-block btn-sm">Explore Courses</a>
+      </div>
+    `);
+  }
+
+  track.innerHTML = cardsHtml.join('');
+
+  // Auto rightward rolling swipe animation
+  if (_carouselAutoScrollTimer) clearInterval(_carouselAutoScrollTimer);
+  _carouselAutoScrollTimer = setInterval(() => {
+    if (!track) return;
+    if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 10) {
+      track.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      track.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  }, 4000);
+}
+window._loadDynamicCourses = _loadDynamicCourses;
+
 // ---- LOAD BROADCAST NOTICES ----
 async function _loadNotices() {
   const container = document.getElementById('noticesContainer');

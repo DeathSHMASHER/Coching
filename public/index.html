@@ -168,50 +168,19 @@
       <p class="section-sub center">Tailored academic guidance for CBSE, ICSE &amp; West Bengal Board (WBBSE / WBCHSE). We teach everyone from absolute basics!</p>
     </div>
 
-    <div class="grid g4">
-      <div class="card card-p2 reveal reveal-delay-1">
-        <div class="chip chip-purple mb-1">Class 5 &amp; 6</div>
-        <h3 class="font-heading mb-1">Middle School Core</h3>
-        <p class="text-sm text-muted mb-2">English, Hindi, Math, Science, Social Science &amp; Computer foundation. Step-by-step guidance.</p>
-        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
-          <div class="text-xs text-muted">Tuition Fee:</div>
-          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹1,500 <span class="text-xs text-dim">/ mo</span></div>
-        </div>
-        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
+    <!-- DYNAMIC ROLLING SWIPE CAROUSEL CONTAINER (LIVE FEE SYNC & SMART GROUPING) -->
+    <div class="carousel-wrapper reveal">
+      <button class="carousel-arrow carousel-arrow-left" onclick="scrollCourseCarousel(-1)" aria-label="Previous Courses">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <div class="course-carousel-track" id="offeringsCarouselTrack">
+        <p class="text-muted text-sm" style="padding:1rem;">Loading live course programs...</p>
       </div>
 
-      <div class="card card-p2 reveal reveal-delay-2">
-        <div class="chip chip-cyan mb-1">Class 7 &amp; 8</div>
-        <h3 class="font-heading mb-1">Advanced Foundation</h3>
-        <p class="text-sm text-muted mb-2">All core subjects with pre-high school prep, problem solving &amp; small batch care.</p>
-        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
-          <div class="text-xs text-muted">Tuition Fee:</div>
-          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹2,500 <span class="text-xs text-dim">/ mo</span></div>
-        </div>
-        <a href="/admission.html" class="btn btn-outline btn-block btn-sm">Explore Courses</a>
-      </div>
-
-      <div class="card card-p2 reveal reveal-delay-3">
-        <div class="chip chip-green mb-1">Class 9 &amp; 10</div>
-        <h3 class="font-heading mb-1">Board Science &amp; Maths</h3>
-        <p class="text-sm text-muted mb-2">Physics, Chemistry, Biology &amp; Maths for CBSE, ICSE &amp; West Bengal Madhyamik.</p>
-        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
-          <div class="text-xs text-muted">Tuition Fee:</div>
-          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹4,000 <span class="text-xs text-dim">/ mo</span></div>
-        </div>
-        <a href="/admission.html" class="btn btn-grad btn-block btn-sm">Explore Courses</a>
-      </div>
-
-      <div class="card card-p2 reveal reveal-delay-4">
-        <div class="chip chip-amber mb-1">Class 11 &amp; 12</div>
-        <h3 class="font-heading mb-1">Board Physics &amp; Maths</h3>
-        <p class="text-sm text-muted mb-2">Calculus, Mechanics, Electrodynamics &amp; WBCHSE / CBSE / ISC Board booster.</p>
-        <div style="padding:0.75rem;background:rgba(255,255,255,0.04);border-radius:var(--r-sm);" class="mb-2">
-          <div class="text-xs text-muted">Tuition Fee:</div>
-          <div class="c-gold font-heading" style="font-size:1.4rem;font-weight:800;">₹1,500 <span class="text-xs text-dim">/ subject</span></div>
-        </div>
-        <a href="/admission.html" class="btn btn-primary btn-block btn-sm">Explore Courses</a>
-      </div>
+      <button class="carousel-arrow carousel-arrow-right" onclick="scrollCourseCarousel(1)" aria-label="Next Courses">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
     </div>
 
     <!-- Python Coding Highlight Card (PROMOTIONAL FEATURED BANNER) -->

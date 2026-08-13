@@ -277,23 +277,68 @@ async function loadCourseCatalogAdmin() {
     return;
   }
 
-  body.innerHTML = res.courses.map(c => `
-    <tr>
-      <td><span class="chip chip-cyan">${c.courseId}</span></td>
-      <td>
-        <div class="font-bold">${c.title}</div>
-        <div class="text-xs text-muted">${c.classes} • ${c.category}</div>
-      </td>
-      <td class="text-sm c-gold font-bold">₹${c.currentFee} <span class="text-xs text-dim">(${c.billingPeriod})</span></td>
-      <td class="text-sm text-dim" style="text-decoration:line-through;">₹${c.originalFee}</td>
-      <td class="text-xs text-muted">${c.timings}</td>
-      <td>
-        <button class="btn btn-sm btn-outline" onclick="openCourseFeeModal('${c.courseId}', '${c.title.replace(/'/g, "\\'")}', ${c.currentFee}, ${c.originalFee})">
-          <i class="fa-solid fa-pen-to-square"></i> Adjust Price
-        </button>
-      </td>
-    </tr>
-  `).join('');
+  body.innerHTML = res.courses.map(c => {
+    const subjBadges = (c.subjects || []).map(s => `
+      <span class="chip chip-cyan mb-1" style="display:inline-flex;align-items:center;gap:0.35rem;">
+        ${s}
+        <i class="fa-solid fa-xmark c-red font-bold" style="cursor:pointer;" onclick="deleteSubjectFromCourse('${c.courseId}', '${s.replace(/'/g, "\\'")}')" title="Remove ${s}"></i>
+      </span>
+    `).join(' ');
+
+    return `
+      <tr>
+        <td><span class="chip chip-cyan">${c.courseId}</span></td>
+        <td>
+          <div class="font-bold mb-1">${c.title}</div>
+          <div class="text-xs text-muted mb-1">${c.classes} • ${c.category}</div>
+          <div class="mb-1">${subjBadges}</div>
+          <div class="input-row mt-1" style="max-width:280px;">
+            <input type="text" id="newSubj_${c.courseId}" class="form-control" placeholder="New subject name..." style="padding:0.35rem 0.6rem;font-size:0.8rem;" />
+            <button class="btn btn-sm btn-primary" onclick="addSubjectToCourse('${c.courseId}')" style="padding:0.35rem 0.6rem;font-size:0.75rem;">+ Add</button>
+          </div>
+        </td>
+        <td class="text-sm c-gold font-bold">₹${c.currentFee} <span class="text-xs text-dim">(${c.billingPeriod})</span></td>
+        <td class="text-sm text-dim" style="text-decoration:line-through;">₹${c.originalFee}</td>
+        <td class="text-xs text-muted">${c.timings}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="openCourseFeeModal('${c.courseId}', '${c.title.replace(/'/g, "\\'")}', ${c.currentFee}, ${c.originalFee})">
+            <i class="fa-solid fa-pen-to-square"></i> Adjust Price
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function deleteSubjectFromCourse(courseId, subject) {
+  if (!confirm(`Are you sure you want to remove subject "${subject}" from course ${courseId}?`)) return;
+
+  const res = await apiRequest(`/courses/${courseId}/subjects`, 'PUT', { action: 'remove', subject });
+  if (res.success) {
+    showToast(res.message, 'success');
+    loadCourseCatalogAdmin();
+  } else {
+    showToast(res.message || 'Error removing subject', 'error');
+  }
+}
+
+async function addSubjectToCourse(courseId) {
+  const input = document.getElementById(`newSubj_${courseId}`);
+  if (!input) return;
+  const subject = input.value.trim();
+  if (!subject) {
+    showToast('Please enter a subject name.', 'error');
+    return;
+  }
+
+  const res = await apiRequest(`/courses/${courseId}/subjects`, 'PUT', { action: 'add', subject });
+  if (res.success) {
+    showToast(res.message, 'success');
+    input.value = '';
+    loadCourseCatalogAdmin();
+  } else {
+    showToast(res.message || 'Error adding subject', 'error');
+  }
 }
 
 function openCourseFeeModal(courseId, title, currentFee, originalFee) {
@@ -420,13 +465,13 @@ function onPerfBatchChange() {
   let subjects = [];
 
   if (batch.includes('11') || batch.includes('12')) {
-    subjects = ['Physics', 'Chemistry']; // Batch 11 & 12 default to Physics and Chemistry
+    subjects = ['Physics', 'Mathematics'];
   } else if (batch.includes('9') || batch.includes('10')) {
     subjects = ['Physics', 'Chemistry', 'Biology', 'Mathematics'];
   } else if (batch.includes('Coding') || batch.includes('Python')) {
     subjects = ['Python Logic', 'Coding Projects'];
   } else {
-    subjects = ['Science', 'Mathematics', 'English', 'Social Science'];
+    subjects = ['Mathematics', 'Science', 'English', 'Social Science', 'History', 'Geography', 'Computer'];
   }
 
   container.innerHTML = `
@@ -998,5 +1043,7 @@ window.closePassResetModal          = closePassResetModal;
 window.openFeeEditModal             = openFeeEditModal;
 window.handleSaveFeeStatus          = handleSaveFeeStatus;
 window.closeFeeModal                = closeFeeModal;
+window.deleteSubjectFromCourse      = deleteSubjectFromCourse;
+window.addSubjectToCourse           = addSubjectToCourse;
 
 

@@ -19,7 +19,37 @@ document.addEventListener('DOMContentLoaded', () => {
       if (card) card.scrollIntoView({ behavior: 'smooth' });
     }, 300);
   }
+
+  _loadAdmissionCourseCatalog();
 });
+
+async function _loadAdmissionCourseCatalog() {
+  const container = document.getElementById('coursesCatalogContainer');
+  if (!container) return;
+
+  const res = await apiRequest('/courses');
+  if (!res.success || !res.courses || !res.courses.length) {
+    container.innerHTML = '<p class="text-muted text-sm text-center">No courses currently listed.</p>';
+    return;
+  }
+
+  container.innerHTML = res.courses.map(c => `
+    <div class="card card-p2 reveal mb-2">
+      <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
+        <span class="chip chip-cyan">${c.classes || 'All Classes'}</span>
+        <span class="chip chip-gold">₹${c.currentFee.toLocaleString()} / mo</span>
+      </div>
+      <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">${c.title}</h3>
+      <p class="text-xs text-muted mb-2">${c.description}</p>
+      <div class="mb-2">
+        ${(c.subjects || []).map(s => `<span class="chip chip-purple text-xs mb-1" style="display:inline-block;margin-right:3px;">${s}</span>`).join('')}
+      </div>
+      <a href="#applyFormCard" class="btn btn-outline btn-sm btn-block" onclick="selectCourseAndScrollToForm('${c.title.replace(/'/g, "\\'")}', '', '')">
+        Apply For Course
+      </a>
+    </div>
+  `).join('');
+}
 
 // Render Dynamic Class-Targeted Course Recommendations
 function renderDynamicRecommendations() {
@@ -50,18 +80,18 @@ function renderDynamicRecommendations() {
     const isClass12 = primaryCourse.includes('12');
     const clsName = isClass11 ? 'Class 11' : isClass12 ? 'Class 12' : 'Class 11/12';
 
-    if (primaryCourse.includes('Physics') && !primaryCourse.includes('Combined') && !primaryCourse.includes('Both')) {
+    if (primaryCourse.includes('Physics') && !primaryCourse.includes('Package') && !primaryCourse.includes('Both')) {
       html += `
         <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
-          <input type="checkbox" id="recCombineBoth" data-price="1500" data-name="${clsName} Chemistry (Combined Physics + Chemistry)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
-          <span><i class="fa-solid fa-flask c-cyan"></i> Upgrade &amp; Add <strong>${clsName} Chemistry</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹1,500/mo (Combine Both for ₹3,000/mo)</span></span>
+          <input type="checkbox" id="recCombineBoth" data-price="2000" data-name="${clsName} Mathematics (Combined Physics + Mathematics)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
+          <span><i class="fa-solid fa-calculator c-cyan"></i> Upgrade &amp; Add <strong>${clsName} Mathematics</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹2,000/mo (Combine Both Package for ₹3,500/mo)</span></span>
         </label>
       `;
-    } else if (primaryCourse.includes('Chemistry') && !primaryCourse.includes('Combined') && !primaryCourse.includes('Both')) {
+    } else if (primaryCourse.includes('Mathematics') && !primaryCourse.includes('Package') && !primaryCourse.includes('Both')) {
       html += `
         <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
-          <input type="checkbox" id="recCombineBoth" data-price="1500" data-name="${clsName} Physics (Combined Physics + Chemistry)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
-          <span><i class="fa-solid fa-atom c-gold"></i> Upgrade &amp; Add <strong>${clsName} Physics</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹1,500/mo (Combine Both for ₹3,000/mo)</span></span>
+          <input type="checkbox" id="recCombineBoth" data-price="2000" data-name="${clsName} Physics (Combined Physics + Mathematics)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
+          <span><i class="fa-solid fa-atom c-gold"></i> Upgrade &amp; Add <strong>${clsName} Physics</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹2,000/mo (Combine Both Package for ₹3,500/mo)</span></span>
         </label>
       `;
     }
