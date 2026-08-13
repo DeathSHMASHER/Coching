@@ -205,7 +205,8 @@ async function _loadDynamicCourses() {
 window._loadDynamicCourses = _loadDynamicCourses;
 
 // ---- SIMPLIFIED 2-INPUT CALCULATOR (BOARD & CLASS) ----
-function calculateScienceRoadmap() {
+// ---- SIMPLIFIED 2-INPUT CALCULATOR (BOARD & CLASS) WITH LIVE DB SYNC ----
+async function calculateScienceRoadmap() {
   const boardEl = document.getElementById('calcBoard');
   const gradeEl = document.getElementById('calcGrade');
   const resultBox = document.getElementById('calcResultBox');
@@ -216,47 +217,66 @@ function calculateScienceRoadmap() {
   const grade = gradeEl ? gradeEl.value : '';
 
   if (!board || !grade) {
-    showToast('Please select both Education Board and Class.', 'error');
+    resultBox.classList.add('hidden');
+    resultBox.innerHTML = '';
     return;
   }
 
   const gradeNum = parseInt(grade.replace(/\D/g, ''), 10) || 5;
 
-  let regTitle = '';
-  let regFee = '';
-  let regSubjects = '';
-  let csTitle = '';
-  let csFee = '';
-  let csSubjects = '';
+  // Fetch live course catalog directly from MongoDB Atlas Cloud Database
+  const res = await apiRequest('/courses?t=' + Date.now());
+  const courses = (res && res.success && res.courses) ? res.courses : [];
 
-  if (gradeNum === 5 || gradeNum === 6) {
-    regTitle = `Class ${gradeNum} Foundation (All Core Subjects)`;
-    regFee = '₹1,500 / month';
-    regSubjects = 'English, Hindi, Mathematics, Science, Social Science, Computer';
-    csTitle = 'Python Coding Specialization';
-    csFee = '₹1,000 / month (Add-on Specialization)';
-    csSubjects = 'No Coding Experience Needed! Python Programming & Logic (2 Classes/wk)';
-  } else if (gradeNum === 7 || gradeNum === 8) {
-    regTitle = `Class ${gradeNum} Advanced Foundation (All Core Subjects)`;
-    regFee = '₹2,500 / month';
-    regSubjects = 'English, Hindi, Mathematics, Science, Social Science, Computer';
-    csTitle = 'Python Coding Specialization';
-    csFee = '₹1,000 / month (Add-on Specialization)';
-    csSubjects = 'No Prior Knowledge Required! Step-by-Step Python & Projects (2 Classes/wk)';
-  } else if (gradeNum === 9 || gradeNum === 10) {
-    regTitle = `Class ${gradeNum} Board Science & Mathematics Mastery`;
-    regFee = '₹4,000 / month';
-    regSubjects = 'Physics, Chemistry, Biology & Mathematics';
-    csTitle = `Computer Science Class ${gradeNum} (Python & Computer Logic)`;
-    csFee = '₹1,200 / month (Standalone) • <strong>₹1,000 / month (₹200 OFF as Add-on!)</strong>';
-    csSubjects = 'Taught From Fundamentals! CS Logic & Practical Exam Drills';
+  const matchedCourse = courses.find(c => {
+    if (c.courseId === `CRS-${gradeNum}`) return true;
+    if (c.classes && c.classes.includes(String(gradeNum)) && !c.title.toLowerCase().includes('computer')) return true;
+    return false;
+  });
+
+  let regTitle = `Class ${gradeNum} Board Course`;
+  let regFee = '₹3,500 / month';
+  let regSubjects = 'Core Science & Mathematics';
+
+  if (matchedCourse) {
+    regTitle = matchedCourse.title;
+    regFee = `₹${matchedCourse.currentFee.toLocaleString()} / month`;
+    regSubjects = (matchedCourse.subjects || []).join(', ');
   } else {
-    regTitle = `Class ${gradeNum} Senior Secondary Science (Physics & Chemistry)`;
-    regFee = '₹1,500 / mo per subject • <strong>₹3,000 / mo for Both Subjects</strong>';
-    regSubjects = 'Physics (₹1,500) & Chemistry (₹1,500) — Opt 1 or Both!';
-    csTitle = `Computer Science Class ${gradeNum} (Python & Data Structures)`;
-    csFee = '₹2,000 / month (Standalone) • <strong>₹1,500 / month (₹500 OFF as Add-on!)</strong>';
-    csSubjects = 'Advanced Python, Data Structures & Algorithms Taught Step-by-Step';
+    // Fallback if network is delayed
+    if (gradeNum === 5 || gradeNum === 6) {
+      regTitle = `Class ${gradeNum} Foundation (All Core Subjects)`;
+      regFee = '₹1,500 / month';
+      regSubjects = 'English, Hindi, Mathematics, Science, Social Science, History, Geography, Computer';
+    } else if (gradeNum === 7 || gradeNum === 8) {
+      regTitle = `Class ${gradeNum} Advanced Foundation (All Core Subjects)`;
+      regFee = '₹2,500 / month';
+      regSubjects = 'English, Hindi, Mathematics, Science, Social Science, History, Geography, Computer';
+    } else if (gradeNum === 9) {
+      regTitle = 'Class 9 Board Science & Mathematics';
+      regFee = '₹3,000 / month';
+      regSubjects = 'Physics, Chemistry, Biology, Mathematics';
+    } else if (gradeNum === 10) {
+      regTitle = 'Class 10 Board Science & Mathematics Mastery';
+      regFee = '₹3,500 / month';
+      regSubjects = 'Physics, Chemistry, Biology, Mathematics';
+    } else if (gradeNum === 11 || gradeNum === 12) {
+      regTitle = `Class ${gradeNum} Board Physics + Mathematics Package`;
+      regFee = '₹3,500 / month';
+      regSubjects = 'Physics, Mathematics';
+    }
+  }
+
+  // Computer Science live database lookup
+  const matchedCs = courses.find(c => c.title.toLowerCase().includes('computer') && (c.classes ? c.classes.includes(String(gradeNum)) : true));
+  let csTitle = `Computer Science Class ${gradeNum} (Python & Coding)`;
+  let csFee = (gradeNum >= 11) ? '₹2,000 / month (Standalone) • ₹1,500 / month (Add-on)' : '₹1,200 / month (Standalone) • ₹1,000 / month (Add-on)';
+  let csSubjects = (gradeNum >= 11) ? 'Python, Data Structures, Algorithms & Practical Exams' : 'Python Programming, Algorithms & Logic Building';
+
+  if (matchedCs) {
+    csTitle = matchedCs.title;
+    csFee = `₹${matchedCs.currentFee.toLocaleString()} / month`;
+    csSubjects = (matchedCs.subjects || []).join(', ');
   }
 
   resultBox.classList.remove('hidden');
@@ -271,7 +291,7 @@ function calculateScienceRoadmap() {
         <h4 style="font-size:1.15rem;font-weight:800;" class="mb-1">${regTitle}</h4>
         <p class="text-xs text-muted mb-1"><i class="fa-solid fa-seedling c-emerald"></i> <strong>Taught From Fundamentals:</strong> Beginners welcome with step-by-step guidance.</p>
         <p class="text-xs text-muted mb-2"><i class="fa-solid fa-book-open c-gold"></i> Included Subjects: <strong>${regSubjects}</strong></p>
-        <a href="/admission.html?course=${encodeURIComponent(regTitle)}&board=${encodeURIComponent(board)}&grade=${gradeNum}#applyFormCard" class="btn btn-grad btn-sm" onclick="applyFromCalculator(event, '${regTitle.replace(/'/g, "\\'")}', '${board.replace(/'/g, "\\'")}', ${gradeNum})">
+        <a href="#applyFormCard" class="btn btn-grad btn-sm" onclick="applyFromCalculator(event, '${regTitle.replace(/'/g, "\\'")}', '${board.replace(/'/g, "\\'")}', ${gradeNum})">
           <i class="fa-solid fa-paper-plane"></i> Apply For ${regTitle}
         </a>
       </div>
@@ -285,7 +305,7 @@ function calculateScienceRoadmap() {
         <h4 style="font-size:1.15rem;font-weight:800;" class="mb-1">${csTitle}</h4>
         <p class="text-xs c-cyan mb-1" style="font-weight:800;"><i class="fa-solid fa-check-circle"></i> NO CODING BACKGROUND NEEDED! Taught 100% From Basics.</p>
         <p class="text-xs text-muted mb-2"><i class="fa-solid fa-laptop-code c-cyan"></i> Curriculum: <strong>${csSubjects}</strong></p>
-        <a href="/admission.html?course=${encodeURIComponent(csTitle)}&board=${encodeURIComponent(board)}&grade=${gradeNum}#applyFormCard" class="btn btn-primary btn-sm" onclick="applyFromCalculator(event, '${csTitle.replace(/'/g, "\\'")}', '${board.replace(/'/g, "\\'")}', ${gradeNum})">
+        <a href="#applyFormCard" class="btn btn-primary btn-sm" onclick="applyFromCalculator(event, '${csTitle.replace(/'/g, "\\'")}', '${board.replace(/'/g, "\\'")}', ${gradeNum})">
           <i class="fa-solid fa-paper-plane"></i> Apply For Computer Science / Coding
         </a>
       </div>
@@ -297,16 +317,15 @@ window.calculateScienceRoadmap = calculateScienceRoadmap;
 function applyFromCalculator(e, regTitle, board, gradeNum) {
   if (e) e.preventDefault();
   
-  sessionStorage.setItem('jigyasa_preselect_course', regTitle);
-  sessionStorage.setItem('jigyasa_preselect_board', board);
-  sessionStorage.setItem('jigyasa_preselect_grade', gradeNum);
+  if (board) sessionStorage.setItem('jigyasa_preselect_board', board);
+  if (gradeNum) sessionStorage.setItem('jigyasa_preselect_grade', gradeNum);
+  if (regTitle) sessionStorage.setItem('jigyasa_preselect_course', regTitle);
 
-  if (window.location.pathname.includes('admission')) {
-    if (window.selectCourseAndScrollToForm) {
-      window.selectCourseAndScrollToForm(regTitle, board, gradeNum);
-    }
+  if (window.selectCourseAndScrollToForm) {
+    window.selectCourseAndScrollToForm(regTitle, board, gradeNum);
   } else {
-    window.location.href = `/admission.html?course=${encodeURIComponent(regTitle)}&board=${encodeURIComponent(board)}&grade=${gradeNum}#applyFormCard`;
+    const card = document.getElementById('applyFormCard');
+    if (card) card.scrollIntoView({ behavior: 'smooth' });
   }
 }
 window.applyFromCalculator = applyFromCalculator;
