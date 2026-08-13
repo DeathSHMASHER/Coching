@@ -77,11 +77,22 @@ router.post('/schedule', async (req, res) => {
 
     const { useMock } = getDbState();
 
+    let cleanLink = meetingLink.trim();
+    if (!cleanLink.startsWith('http://') && !cleanLink.startsWith('https://')) {
+      if (/^[a-z0-9]{3,4}-[a-z0-9]{3,4}-[a-z0-9]{3,4}$/i.test(cleanLink)) {
+        cleanLink = 'https://meet.google.com/' + cleanLink;
+      } else if (cleanLink.startsWith('meet.google.com/')) {
+        cleanLink = 'https://' + cleanLink;
+      } else {
+        cleanLink = 'https://' + cleanLink;
+      }
+    }
+
     const newClass = {
       classId: 'LIV-' + Date.now().toString().slice(-5),
       title,
       targetBatch: targetBatch || 'All Batches',
-      meetingLink: meetingLink.startsWith('http') ? meetingLink : 'https://' + meetingLink,
+      meetingLink: cleanLink,
       date: date || new Date().toISOString().split('T')[0],
       time: time || '7:30 PM - 9:00 PM',
       instructor: 'Shahriyar Taufik',

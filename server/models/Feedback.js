@@ -8,6 +8,7 @@ const feedbackSchema = new mongoose.Schema({
   clarityRating: { type: Number, required: true, min: 1, max: 5 },
   materialRating: { type: Number, required: true, min: 1, max: 5 },
   supportRating: { type: Number, required: true, min: 1, max: 5 },
+  batch: { type: String, default: 'General Batch' },
   comments: { type: String, default: '' }
 }, { timestamps: true });
 

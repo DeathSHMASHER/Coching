@@ -2,21 +2,24 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Doubt = require('../models/Doubt');
-const { getDbState } = require('../config/db');
+const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
 
 // Student: Get doubts for a specific student
 router.get('/student/:studentId', async (req, res) => {
   try {
     const cleanId = req.params.studentId.trim();
-    const { useMock } = getDbState();
+    await connectDB();
 
     let doubts = [];
 
-    if (useMock) {
-      doubts = mockData.doubts.filter(d => d.studentId.toLowerCase() === cleanId.toLowerCase());
+    if (process.env.MONGODB_URI) {
+      const regex = new RegExp('^' + cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
+      doubts = await Doubt.find({
+        $or: [{ studentId: regex }, { studentId: cleanId }]
+      }).sort({ createdAt: -1 });
     } else {
-      doubts = await Doubt.find({ studentId: new RegExp('^' + cleanId + '$', 'i') }).sort({ createdAt: -1 });
+      doubts = (mockData.doubts || []).filter(d => d.studentId.toLowerCase() === cleanId.toLowerCase());
     }
 
     return res.json({ success: true, count: doubts.length, doubts });
@@ -25,16 +28,23 @@ router.get('/student/:studentId', async (req, res) => {
   }
 });
 
+// Alias: /api/doubts/:studentId
+router.get('/:studentId', async (req, res, next) => {
+  if (req.params.studentId === 'all') return next();
+  req.url = '/student/' + encodeURIComponent(req.params.studentId);
+  return router.handle(req, res, next);
+});
+
 // Admin: Get all doubts (pending & resolved)
 router.get('/all', async (req, res) => {
   try {
-    const { useMock } = getDbState();
+    await connectDB();
     let doubts = [];
 
-    if (useMock) {
-      doubts = mockData.doubts;
-    } else {
+    if (process.env.MONGODB_URI) {
       doubts = await Doubt.find().sort({ createdAt: -1 });
+    } else {
+      doubts = mockData.doubts || [];
     }
 
     return res.json({ success: true, count: doubts.length, doubts });

@@ -135,19 +135,32 @@ async function _loadStudentLiveClasses() {
     return;
   }
 
-  container.innerHTML = res.liveClasses.map(c => `
-    <div class="card card-p2 mb-2" style="border-color:var(--cyan);background:rgba(0,240,255,0.05);">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
-        <span class="chip chip-cyan"><i class="fa-solid fa-video"></i> Live Class • ${c.targetBatch}</span>
-        <span class="chip chip-green"><i class="fa-solid fa-clock"></i> ${c.date} • ${c.time}</span>
+  container.innerHTML = res.liveClasses.map(c => {
+    let cleanLink = (c.meetingLink || '').trim();
+    if (!cleanLink.startsWith('http://') && !cleanLink.startsWith('https://')) {
+      if (/^[a-z0-9]{3,4}-[a-z0-9]{3,4}-[a-z0-9]{3,4}$/i.test(cleanLink)) {
+        cleanLink = 'https://meet.google.com/' + cleanLink;
+      } else if (cleanLink.startsWith('meet.google.com/')) {
+        cleanLink = 'https://' + cleanLink;
+      } else {
+        cleanLink = 'https://' + cleanLink;
+      }
+    }
+
+    return `
+      <div class="card card-p2 mb-2" style="border-color:var(--cyan);background:rgba(0,240,255,0.05);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
+          <span class="chip chip-cyan"><i class="fa-solid fa-video"></i> Live Class • ${c.targetBatch}</span>
+          <span class="chip chip-green"><i class="fa-solid fa-clock"></i> ${c.date} • ${c.time}</span>
+        </div>
+        <h3 class="font-heading mb-1" style="font-size:1.15rem;font-weight:800;">${c.title}</h3>
+        <p class="text-xs text-muted mb-2"><i class="fa-solid fa-user-ninja c-gold"></i> Instructor: <strong>${c.instructor}</strong> ${c.notes ? '• ' + c.notes : ''}</p>
+        <a href="${cleanLink}" target="_blank" class="btn btn-grad btn-sm">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Join Live Meeting Class
+        </a>
       </div>
-      <h3 class="font-heading mb-1" style="font-size:1.15rem;font-weight:800;">${c.title}</h3>
-      <p class="text-xs text-muted mb-2"><i class="fa-solid fa-user-ninja c-gold"></i> Instructor: <strong>${c.instructor}</strong> ${c.notes ? '• ' + c.notes : ''}</p>
-      <a href="${c.meetingLink}" target="_blank" class="btn btn-grad btn-sm">
-        <i class="fa-solid fa-arrow-right-to-bracket"></i> Join Live Meeting Class
-      </a>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // 1. ATTENDANCE
@@ -435,7 +448,7 @@ async function _loadDoubts() {
   const feed = document.getElementById('studentDoubtsFeed');
   if (!feed) return;
 
-  const res = await apiRequest('/doubts/' + _currentStudent.studentId);
+  const res = await apiRequest('/doubts/student/' + encodeURIComponent(_currentStudent.studentId));
   if (!res.success || !res.doubts || !res.doubts.length) {
     feed.innerHTML = '<p class="text-muted text-sm">You haven\'t submitted any doubt tickets yet.</p>';
     return;

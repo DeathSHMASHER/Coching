@@ -758,7 +758,6 @@ async function loadStudentsDirectoryAdmin() {
     <tr>
       <td>
         <span class="chip chip-cyan" style="font-weight:800;">${s.studentId}</span>
-        <div class="text-xs c-gold mt-1" style="font-weight:700;"><i class="fa-solid fa-key"></i> Pass: ${s.password || '1234'}</div>
       </td>
       <td><div class="font-bold">${s.name}</div><div class="text-xs text-muted">${s.email} • ${s.phone || 'N/A'}</div></td>
       <td class="text-sm">${s.course} <div class="text-xs text-muted">${s.batch || 'General Batch'}</div></td>

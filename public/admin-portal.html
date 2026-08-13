@@ -411,15 +411,38 @@
         </div>
       </div>
 
-      <!-- 7. ENROLLED ROSTER & PASSWORDS -->
+      <!-- 7. ENROLLED ROSTER -->
       <div class="tab-pane" id="tab-students-adm">
+        <div class="card card-p3 mb-3">
+          <h3 class="font-heading mb-2"><i class="fa-solid fa-bullhorn c-cyan"></i> Request Batch Feedback / Survey</h3>
+          <form onsubmit="handleBroadcastBatchFeedback(event)" class="grid g3">
+            <div class="form-group mb-0">
+              <label class="form-label">Feedback Survey Title *</label>
+              <input id="batchFeedbackTitle" class="form-control" type="text" placeholder="e.g. Mid-Term Physics Batch Survey" required />
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label">Target Batch / Class *</label>
+              <select id="batchFeedbackTarget" class="form-control" required>
+                <option value="All Batches">All Batches (Global)</option>
+                <option value="Morning Batch Alpha">Morning Batch Alpha</option>
+                <option value="Evening Batch Beta">Evening Batch Beta</option>
+                <option value="Class 11 Physics">Class 11 Physics</option>
+                <option value="Class 12 Chemistry">Class 12 Chemistry</option>
+              </select>
+            </div>
+            <div class="form-group mb-0" style="display:flex;align-items:flex-end;">
+              <button type="submit" class="btn btn-grad btn-block"><i class="fa-solid fa-paper-plane"></i> Request Feedback</button>
+            </div>
+          </form>
+        </div>
+
         <div class="card card-p3">
-          <h3 class="font-heading mb-2"><i class="fa-solid fa-users c-gold"></i> Enrolled Student Directory &amp; Individual Passwords</h3>
+          <h3 class="font-heading mb-2"><i class="fa-solid fa-users c-gold"></i> Enrolled Student Directory</h3>
           <div class="table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Student ID &amp; Password</th>
+                  <th>Student ID</th>
                   <th>Student Name</th>
                   <th>Enrolled Course</th>
                   <th>Fee Ledger</th>
