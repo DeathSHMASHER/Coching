@@ -170,9 +170,10 @@ router.put('/:studentId/fee', async (req, res) => {
     if (feeDueAmount !== undefined) updateFields.feeDueAmount = Number(feeDueAmount);
 
     if (process.env.MONGODB_URI) {
-      let query = { studentId: new RegExp('^' + cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') };
-      if (mongoose.Types.ObjectId.isValid(cleanId)) {
-        query = { $or: [{ studentId: new RegExp('^' + cleanId + '$', 'i') }, { _id: cleanId }] };
+      const escapedId = cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let query = { studentId: new RegExp('^' + escapedId + '$', 'i') };
+      if (/^[0-9a-fA-F]{24}$/.test(cleanId)) {
+        query = { $or: [{ studentId: new RegExp('^' + escapedId + '$', 'i') }, { _id: cleanId }] };
       }
 
       const stu = await Student.findOneAndUpdate(
@@ -244,9 +245,10 @@ router.delete('/:studentId', async (req, res) => {
     if (useMock) {
       mockData.students = mockData.students.filter(s => s.studentId.toLowerCase() !== cleanId.toLowerCase() && s._id !== cleanId);
     } else {
-      let query = { studentId: new RegExp('^' + cleanId + '$', 'i') };
-      if (mongoose.Types.ObjectId.isValid(req.params.studentId)) {
-        query = { $or: [{ studentId: new RegExp('^' + cleanId + '$', 'i') }, { _id: req.params.studentId }] };
+      const escapedId = cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let query = { studentId: new RegExp('^' + escapedId + '$', 'i') };
+      if (/^[0-9a-fA-F]{24}$/.test(cleanId)) {
+        query = { $or: [{ studentId: new RegExp('^' + escapedId + '$', 'i') }, { _id: cleanId }] };
       }
       await Student.findOneAndDelete(query);
     }

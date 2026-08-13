@@ -274,7 +274,7 @@ router.delete('/:id', async (req, res) => {
       mockData.admissions = mockData.admissions.filter(a => a.applicationId.toUpperCase() !== appId && a._id !== appId);
     } else {
       let query = { applicationId: appId };
-      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      if (/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
         query = { $or: [{ applicationId: appId }, { _id: req.params.id }] };
       }
       await Admission.findOneAndDelete(query);

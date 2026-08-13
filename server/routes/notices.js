@@ -72,7 +72,7 @@ router.delete('/:id', async (req, res) => {
       mockData.notices = mockData.notices.filter(n => n.noticeId !== noticeId && n._id !== noticeId);
     } else {
       let query = { noticeId: noticeId };
-      if (mongoose.Types.ObjectId.isValid(noticeId)) {
+      if (/^[0-9a-fA-F]{24}$/.test(noticeId)) {
         query = { $or: [{ noticeId: noticeId }, { _id: noticeId }] };
       }
       await Notice.findOneAndDelete(query);

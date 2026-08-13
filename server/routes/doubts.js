@@ -116,7 +116,7 @@ router.put('/:doubtId/resolve', async (req, res) => {
       return res.json({ success: true, message: 'Doubt solution published.', doubt: dbt });
     } else {
       let query = { doubtId: doubtId };
-      if (mongoose.Types.ObjectId.isValid(doubtId)) {
+      if (/^[0-9a-fA-F]{24}$/.test(doubtId)) {
         query = { $or: [{ doubtId }, { _id: doubtId }] };
       }
       const dbt = await Doubt.findOneAndUpdate(
@@ -146,7 +146,7 @@ router.delete('/:doubtId', async (req, res) => {
       mockData.doubts = mockData.doubts.filter(d => d.doubtId !== doubtId && d._id !== doubtId);
     } else {
       let query = { doubtId: doubtId };
-      if (mongoose.Types.ObjectId.isValid(doubtId)) {
+      if (/^[0-9a-fA-F]{24}$/.test(doubtId)) {
         query = { $or: [{ doubtId }, { _id: doubtId }] };
       }
       await Doubt.findOneAndDelete(query);

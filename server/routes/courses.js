@@ -302,7 +302,7 @@ router.put('/:courseId', async (req, res) => {
       if (timings) updateData.timings = timings;
 
       let query = { courseId: courseId };
-      if (mongoose.Types.ObjectId.isValid(courseId)) {
+      if (/^[0-9a-fA-F]{24}$/.test(courseId)) {
         query = { $or: [{ courseId }, { _id: courseId }] };
       }
 
@@ -331,7 +331,7 @@ router.delete('/:courseId', async (req, res) => {
       return res.json({ success: true, message: 'Course removed from catalog successfully!' });
     } else {
       let query = { courseId: courseId };
-      if (mongoose.Types.ObjectId.isValid(courseId)) {
+      if (/^[0-9a-fA-F]{24}$/.test(courseId)) {
         query = { $or: [{ courseId }, { _id: courseId }] };
       }
 
