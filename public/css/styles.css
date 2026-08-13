@@ -423,6 +423,8 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   display: flex;
   align-items: center;
   position: relative;
+}
+
 .hero-bg {
   position: absolute;
   inset: 0;
