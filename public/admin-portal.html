@@ -11,6 +11,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/styles.css" />
+  <script>
+    (function() {
+      var savedTheme = localStorage.getItem('jigyasa_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
 </head>
 <body>
 
@@ -31,11 +37,46 @@
       <li><a class="nav-link" href="/student-portal.html"><i class="fa-solid fa-user-graduate"></i> Student Portal</a></li>
     </ul>
 
-    <div class="nav-actions">
-      <button class="btn btn-ghost btn-sm" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Exit Admin Desk</button>
+    <!-- HIGHLIGHTED PORTAL LOGIN & ANIMATED THEME SWITCHER -->
+    <div class="nav-right-container">
+      <!-- Animated Smooth Sliding Theme Toggle (Left to Right / Sun to Moon) -->
+      <div class="theme-toggle-switch" onclick="toggleTheme(event)" role="switch" aria-checked="false" aria-label="Toggle Dark and Light Mode" title="Toggle Theme" id="navThemeToggle">
+        <span class="theme-switch-track-icon track-icon-moon" id="navMoonIcon"><i class="fa-solid fa-moon"></i></span>
+        <span class="theme-switch-track-icon track-icon-sun" id="navSunIcon"><i class="fa-solid fa-sun"></i></span>
+        <div class="theme-switch-thumb">
+          <i class="fa-solid fa-moon thumb-icon thumb-moon-icon"></i>
+          <i class="fa-solid fa-sun thumb-icon thumb-sun-icon"></i>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn btn-ghost btn-sm" onclick="logoutAdmin()"><i class="fa-solid fa-right-from-bracket"></i> Exit Admin Desk</button>
+      </div>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </header>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div style="padding: 0.5rem 1rem; display:flex; align-items:center; justify-content:space-between; background:var(--bg-subcard); border-radius:var(--r-md); margin-bottom:0.5rem;">
+    <span class="text-sm font-bold text-muted"><i class="fa-solid fa-circle-half-stroke c-gold"></i> Theme Mode</span>
+    <div class="theme-toggle-switch" onclick="toggleTheme(event)" role="switch" aria-checked="false" aria-label="Toggle Dark and Light Mode" title="Toggle Theme">
+      <span class="theme-switch-track-icon track-icon-moon"><i class="fa-solid fa-moon"></i></span>
+      <span class="theme-switch-track-icon track-icon-sun"><i class="fa-solid fa-sun"></i></span>
+      <div class="theme-switch-thumb">
+        <i class="fa-solid fa-moon thumb-icon thumb-moon-icon"></i>
+        <i class="fa-solid fa-sun thumb-icon thumb-sun-icon"></i>
+      </div>
+    </div>
+  </div>
+  <a class="drawer-link" href="/index.html"><i class="fa-solid fa-house c-gold"></i> Home</a>
+  <a class="drawer-link" href="/admission.html"><i class="fa-solid fa-file-signature c-sapphire"></i> Courses &amp; Admission</a>
+  <a class="drawer-link" href="/student-portal.html"><i class="fa-solid fa-user-graduate c-gold"></i> Student Portal</a>
+</div>
 
 <main>
 <!-- PROTECTED PASSCODE AUTH MODAL -->

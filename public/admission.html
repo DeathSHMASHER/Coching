@@ -11,6 +11,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="/css/styles.css" />
+  <script>
+    (function() {
+      var savedTheme = localStorage.getItem('jigyasa_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
 </head>
 <body>
 
@@ -31,21 +37,44 @@
       <li><a class="nav-link" href="/student-portal.html"><i class="fa-solid fa-user-graduate"></i> Student Portal</a></li>
     </ul>
 
-    <!-- HIGHLIGHTED PORTAL LOGIN CTA -->
-    <div class="nav-actions">
-      <a href="/student-portal.html" class="btn btn-grad">
-        <i class="fa-solid fa-user-graduate"></i> Portal Login
-      </a>
-    </div>
+    <!-- HIGHLIGHTED PORTAL LOGIN & ANIMATED THEME SWITCHER -->
+    <div class="nav-right-container">
+      <!-- Animated Smooth Sliding Theme Toggle (Left to Right / Sun to Moon) -->
+      <div class="theme-toggle-switch" onclick="toggleTheme(event)" role="switch" aria-checked="false" aria-label="Toggle Dark and Light Mode" title="Toggle Theme" id="navThemeToggle">
+        <span class="theme-switch-track-icon track-icon-moon" id="navMoonIcon"><i class="fa-solid fa-moon"></i></span>
+        <span class="theme-switch-track-icon track-icon-sun" id="navSunIcon"><i class="fa-solid fa-sun"></i></span>
+        <div class="theme-switch-thumb">
+          <i class="fa-solid fa-moon thumb-icon thumb-moon-icon"></i>
+          <i class="fa-solid fa-sun thumb-icon thumb-sun-icon"></i>
+        </div>
+      </div>
 
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
-      <span></span><span></span><span></span>
-    </button>
+      <div class="nav-actions">
+        <a href="/student-portal.html" class="btn btn-grad">
+          <i class="fa-solid fa-user-graduate"></i> Portal Login
+        </a>
+      </div>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 </header>
 
 <!-- MOBILE DRAWER -->
 <div class="mobile-drawer" id="mobileDrawer">
+  <div style="padding: 0.5rem 1rem; display:flex; align-items:center; justify-content:space-between; background:var(--bg-subcard); border-radius:var(--r-md); margin-bottom:0.5rem;">
+    <span class="text-sm font-bold text-muted"><i class="fa-solid fa-circle-half-stroke c-gold"></i> Theme Mode</span>
+    <div class="theme-toggle-switch" onclick="toggleTheme(event)" role="switch" aria-checked="false" aria-label="Toggle Dark and Light Mode" title="Toggle Theme">
+      <span class="theme-switch-track-icon track-icon-moon"><i class="fa-solid fa-moon"></i></span>
+      <span class="theme-switch-track-icon track-icon-sun"><i class="fa-solid fa-sun"></i></span>
+      <div class="theme-switch-thumb">
+        <i class="fa-solid fa-moon thumb-icon thumb-moon-icon"></i>
+        <i class="fa-solid fa-sun thumb-icon thumb-sun-icon"></i>
+      </div>
+    </div>
+  </div>
   <a class="drawer-link" href="/index.html"><i class="fa-solid fa-house c-gold"></i> Home</a>
   <a class="drawer-link active" href="/admission.html"><i class="fa-solid fa-graduation-cap c-sapphire"></i> Courses &amp; Admission</a>
   <a class="drawer-link" href="/student-portal.html"><i class="fa-solid fa-user-graduate c-gold"></i> Portal Login</a>
@@ -93,7 +122,7 @@
           </select>
         </div>
       </div>
-      <button type="button" class="btn btn-outline btn-sm mt-2" onclick="calculateScienceRoadmap()">
+      <button type="button" class="btn btn-outline btn-sm mt-2" onclick="calculateScienceRoadmap(true)">
         <i class="fa-solid fa-flask"></i> Calculate My Course Fee
       </button>
       <div id="calcResultBox" class="hidden"></div>
@@ -104,140 +133,7 @@
       <h3 class="font-heading" style="font-size:1.6rem;font-weight:800;"><i class="fa-solid fa-tags c-gold"></i> Complete Course Offerings (Class 5 to 12)</h3>
     </div>
     <div class="grid g3 mb-4" id="coursesCatalogContainer">
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 5</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹1,500 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 5 Foundation (All Core Subjects)</h3>
-        <p class="text-xs text-muted mb-2">Comprehensive core subject foundation for CBSE, ICSE &amp; WBBSE. Taught 100% from absolute basics!</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">English</span> <span class="chip chip-purple text-xs mb-1">Hindi</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span> <span class="chip chip-purple text-xs mb-1">Science</span> <span class="chip chip-purple text-xs mb-1">Social Science</span> <span class="chip chip-purple text-xs mb-1">History</span> <span class="chip chip-purple text-xs mb-1">Geography</span> <span class="chip chip-purple text-xs mb-1">Computer</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-sm btn-block mt-1" onclick="selectCourseAndScrollToForm('Class 5 Foundation (All Core Subjects)', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 6</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹1,500 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 6 Foundation (All Core Subjects)</h3>
-        <p class="text-xs text-muted mb-2">Structured middle-school academic excellence for CBSE, ICSE &amp; WBBSE.</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">English</span> <span class="chip chip-purple text-xs mb-1">Hindi</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span> <span class="chip chip-purple text-xs mb-1">Science</span> <span class="chip chip-purple text-xs mb-1">Social Science</span> <span class="chip chip-purple text-xs mb-1">History</span> <span class="chip chip-purple text-xs mb-1">Geography</span> <span class="chip chip-purple text-xs mb-1">Computer</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-sm btn-block mt-1" onclick="selectCourseAndScrollToForm('Class 6 Foundation (All Core Subjects)', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 7</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹2,500 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 7 Advanced Foundation</h3>
-        <p class="text-xs text-muted mb-2">Deep academic concept building for CBSE, ICSE &amp; WBBSE students.</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">English</span> <span class="chip chip-purple text-xs mb-1">Hindi</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span> <span class="chip chip-purple text-xs mb-1">Science</span> <span class="chip chip-purple text-xs mb-1">Social Science</span> <span class="chip chip-purple text-xs mb-1">History</span> <span class="chip chip-purple text-xs mb-1">Geography</span> <span class="chip chip-purple text-xs mb-1">Computer</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-sm btn-block mt-1" onclick="selectCourseAndScrollToForm('Class 7 Advanced Foundation (All Core Subjects)', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 8</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹2,500 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 8 Advanced Foundation</h3>
-        <p class="text-xs text-muted mb-2">High-school preparation program for CBSE, ICSE &amp; WBBSE.</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">English</span> <span class="chip chip-purple text-xs mb-1">Hindi</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span> <span class="chip chip-purple text-xs mb-1">Science</span> <span class="chip chip-purple text-xs mb-1">Social Science</span> <span class="chip chip-purple text-xs mb-1">History</span> <span class="chip chip-purple text-xs mb-1">Geography</span> <span class="chip chip-purple text-xs mb-1">Computer</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-block btn-sm mt-1" onclick="selectCourseAndScrollToForm('Class 8 Advanced Foundation (All Core Subjects)', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 9</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹4,000 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 9 Board Science &amp; Mathematics</h3>
-        <p class="text-xs text-muted mb-2">Focused Science &amp; Mathematics for CBSE, ICSE &amp; WBBSE. Step-by-step problem solving.</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">Physics</span> <span class="chip chip-purple text-xs mb-1">Chemistry</span> <span class="chip chip-purple text-xs mb-1">Biology</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-block btn-sm mt-1" onclick="selectCourseAndScrollToForm('Class 9 Board Science & Mathematics', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 10</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹4,000 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 10 Board Science &amp; Mathematics Mastery</h3>
-        <p class="text-xs text-muted mb-2">Intensive Class 10 Board exam preparation for CBSE, ICSE &amp; WBBSE (Madhyamik).</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">Physics</span> <span class="chip chip-purple text-xs mb-1">Chemistry</span> <span class="chip chip-purple text-xs mb-1">Biology</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-block btn-sm mt-1" onclick="selectCourseAndScrollToForm('Class 10 Board Science & Mathematics Mastery', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 11</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹3,500 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 11 Board Physics + Mathematics Package</h3>
-        <p class="text-xs text-muted mb-2">Combined Physics &amp; Math double mastery package for Class 11 Board exams (CBSE / ISC / WBCHSE).</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">Physics</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-block btn-sm mt-1" onclick="selectCourseAndScrollToForm('Class 11 Board Physics + Mathematics Package', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 12</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹3,500 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Class 12 Board Physics + Mathematics Package</h3>
-        <p class="text-xs text-muted mb-2">Complete Class 12 Board score booster for CBSE, ISC &amp; West Bengal Board (HS / WBCHSE).</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">Physics</span> <span class="chip chip-purple text-xs mb-1">Mathematics</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-block btn-sm mt-1" onclick="selectCourseAndScrollToForm('Class 12 Board Physics + Mathematics Package', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
-
-      <div class="card card-p2 mb-2" style="opacity:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-          <span class="chip chip-cyan">Class 9-12</span>
-          <span class="chip chip-gold" style="font-weight:800;">₹1,000 / mo</span>
-        </div>
-        <h3 style="font-size:1.15rem;font-weight:800;" class="mb-1">Computer Science &amp; Python Coding</h3>
-        <p class="text-xs text-muted mb-2">Python logic, algorithms, practical exam prep &amp; real-world projects from scratch.</p>
-        <div class="mb-2">
-          <span class="chip chip-purple text-xs mb-1">Computer Science</span> <span class="chip chip-purple text-xs mb-1">Python Coding</span>
-        </div>
-        <a href="#applyFormCard" class="btn btn-outline btn-block btn-sm mt-1" onclick="selectCourseAndScrollToForm('Computer Science & Coding Class 9 & 10', '', '')">
-          <i class="fa-solid fa-pen-to-square"></i> Apply For Course
-        </a>
-      </div>
+      <p class="text-muted text-sm" style="padding:2rem;grid-column:1/-1;text-align:center;"><i class="fa-solid fa-spinner fa-spin c-gold"></i> Loading live course offerings from database...</p>
     </div>
 
     <div class="separate-adm-section">
@@ -288,7 +184,7 @@
           </div>
 
           <!-- DYNAMIC CLASS-TARGETED COURSE & ADD-ON RECOMMENDATIONS -->
-          <div id="dynamicAddonWrapper" class="form-group mb-2 hidden" style="background:rgba(255,255,255,0.03);padding:1.1rem;border-radius:var(--r-sm);border:1.5px solid rgba(255,183,3,0.35);">
+          <div id="dynamicAddonWrapper" class="form-group mb-2 hidden" style="background:var(--bg-subcard);padding:1.1rem;border-radius:var(--r-sm);border:1.5px solid var(--border-active);">
             <label class="form-label c-gold mb-1" style="font-weight:800;font-size:0.95rem;">
               <i class="fa-solid fa-sparkles c-gold"></i> Recommended Course Upgrades &amp; Add-ons For Your Selected Class:
             </label>

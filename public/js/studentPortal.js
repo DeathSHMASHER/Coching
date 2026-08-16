@@ -205,7 +205,7 @@ async function _loadStudentLiveClasses() {
 
   if (!res.success || !res.liveClasses || !res.liveClasses.length) {
     container.innerHTML = `
-      <div style="background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.1);padding:1.2rem;border-radius:var(--r-sm);text-align:center;">
+      <div style="background:var(--bg-subcard);border:1px dashed var(--border-subcard);padding:1.2rem;border-radius:var(--r-sm);text-align:center;">
         <i class="fa-solid fa-calendar-xmark c-amber" style="font-size:1.5rem;" class="mb-1"></i>
         <p class="text-xs text-muted">No live classes scheduled right now for batch: <strong>${_currentStudent.course}</strong>.</p>
       </div>
@@ -232,7 +232,7 @@ async function _loadStudentLiveClasses() {
     } else {
       statusChip = `<span class="chip chip-amber"><i class="fa-solid fa-clock"></i> Starts at ${c.time}</span>`;
       actionBtn = `<button class="btn btn-sm btn-outline" disabled style="opacity:0.65;cursor:not-allowed;"><i class="fa-solid fa-clock"></i> Session Starts at ${c.time}</button>`;
-      cardBg = 'border-color:rgba(255,183,3,0.3);background:rgba(255,183,3,0.04);';
+      cardBg = 'border-color:var(--border-active);background:var(--bg-subcard);';
     }
 
     return `
@@ -267,7 +267,7 @@ async function _loadAttendance() {
       logsContainer.innerHTML = '<p class="text-muted text-sm">No attendance records logged yet.</p>';
     } else {
       logsContainer.innerHTML = res.records.map(r => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0.9rem;background:rgba(255,255,255,0.03);border-radius:var(--r-sm);margin-bottom:0.5rem;border:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0.9rem;background:var(--bg-subcard);border-radius:var(--r-sm);margin-bottom:0.5rem;border:1px solid var(--border-subcard);">
           <div>
             <div style="font-weight:700;font-size:0.9rem;">${r.topicCovered || 'Lecture Session'}</div>
             <div class="text-xs text-muted">${new Date(r.date).toLocaleDateString()}</div>
@@ -336,14 +336,14 @@ async function _loadPerformance() {
             <g id="speedoNeedle" class="speedo-needle" style="transform: rotate(0deg);">
               <line x1="140" y1="140" x2="45" y2="140" stroke="${strokeColor}" stroke-width="4.5" stroke-linecap="round" />
               <circle cx="140" cy="140" r="8" fill="${strokeColor}" />
-              <circle cx="140" cy="140" r="4" fill="#040711" />
+              <circle cx="140" cy="140" r="4" fill="var(--bg-card)" />
             </g>
           </svg>
         </div>
 
         <!-- 3 WEIGHTED METRIC BARS -->
         <div class="grid g3 mb-3">
-          <div style="background:rgba(255,255,255,0.04);padding:0.9rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
+          <div style="background:var(--bg-subcard);padding:0.9rem;border-radius:var(--r-sm);border:1px solid var(--border-subcard);">
             <div style="display:flex;justify-content:space-between;" class="text-xs mb-1">
               <span><i class="fa-solid fa-file-pen c-gold"></i> Exam Marks (50%)</span>
               <strong class="c-gold">${weights.examPct}% (${weights.examWeighted}/50 pts)</strong>
@@ -351,7 +351,7 @@ async function _loadPerformance() {
             <div class="prog-track"><div class="prog-fill" style="width:${weights.examPct}%"></div></div>
           </div>
 
-          <div style="background:rgba(255,255,255,0.04);padding:0.9rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
+          <div style="background:var(--bg-subcard);padding:0.9rem;border-radius:var(--r-sm);border:1px solid var(--border-subcard);">
             <div style="display:flex;justify-content:space-between;" class="text-xs mb-1">
               <span><i class="fa-solid fa-calendar-check c-emerald"></i> Attendance (30%)</span>
               <strong class="c-emerald">${weights.attPct}% (${weights.attWeighted}/30 pts)</strong>
@@ -359,7 +359,7 @@ async function _loadPerformance() {
             <div class="prog-track"><div class="prog-fill" style="width:${weights.attPct}%"></div></div>
           </div>
 
-          <div style="background:rgba(255,255,255,0.04);padding:0.9rem;border-radius:var(--r-sm);border:1px solid rgba(255,255,255,0.08);">
+          <div style="background:var(--bg-subcard);padding:0.9rem;border-radius:var(--r-sm);border:1px solid var(--border-subcard);">
             <div style="display:flex;justify-content:space-between;" class="text-xs mb-1">
               <span><i class="fa-solid fa-comments c-cyan"></i> Class Engagement (20%)</span>
               <strong class="c-cyan">${weights.classParticipation}% (${weights.participationWeighted}/20 pts)</strong>
@@ -457,6 +457,7 @@ function _launchGreenCelebration() {
   if (!canvas) {
     canvas = document.createElement('canvas');
     canvas.id = 'celebrationCanvas';
+    canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99999;';
     document.body.appendChild(canvas);
   }
 

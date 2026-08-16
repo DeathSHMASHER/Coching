@@ -130,44 +130,123 @@ function renderDynamicRecommendations() {
     const isClass12 = primaryCourse.includes('12');
     const clsName = isClass11 ? 'Class 11' : isClass12 ? 'Class 12' : 'Class 11/12';
 
+    // 1. Dynamic DB pricing lookup for Individual Physics, Mathematics, and Combo Courses
+    const phyCourse = _fetchedCourses.find(c => c.courseId === (isClass11 ? 'CRS-11-PHY' : 'CRS-12-PHY')) || { currentFee: 1800 };
+    const mathCourse = _fetchedCourses.find(c => c.courseId === (isClass11 ? 'CRS-11-MTH' : 'CRS-12-MTH')) || { currentFee: 1800 };
+    const comboCourse = _fetchedCourses.find(c => c.courseId === (isClass11 ? 'CRS-11-COMBO' : 'CRS-12-COMBO')) || { currentFee: 3500 };
+
+    const phyFee = Number(phyCourse.currentFee) || 1800;
+    const mathFee = Number(mathCourse.currentFee) || 1800;
+    const comboFee = Number(comboCourse.currentFee) || 3500;
+    const sumIndividual = phyFee + mathFee;
+    const comboSavings = Math.max(0, sumIndividual - comboFee);
+
     if (primaryCourse.includes('Physics') && !primaryCourse.includes('Package') && !primaryCourse.includes('Both')) {
+      const upgradePrice = Math.max(0, comboFee - phyFee);
       html += `
-        <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
-          <input type="checkbox" id="recCombineBoth" data-price="2000" data-name="${clsName} Mathematics (Combined Physics + Mathematics)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
-          <span><i class="fa-solid fa-calculator c-cyan"></i> Upgrade &amp; Add <strong>${clsName} Mathematics</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹2,000/mo (Combine Both Package for ₹3,500/mo)</span></span>
+        <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;flex-wrap:wrap;" class="text-sm">
+          <input type="checkbox" id="recCombineBoth" data-price="${upgradePrice}" data-name="${clsName} Mathematics (Combined Package)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
+          <span>
+            <i class="fa-solid fa-calculator c-cyan"></i> Upgrade &amp; Add <strong>${clsName} Mathematics</strong> — 
+            <span class="chip chip-amber text-xs" style="font-weight:800;">+₹${upgradePrice.toLocaleString()}/mo</span>
+            ${comboSavings > 0 
+              ? `<span class="chip chip-green text-xs" style="font-weight:800;"><i class="fa-solid fa-tag"></i> Save ₹${comboSavings.toLocaleString()} OFF Combo! (Total: ₹${comboFee.toLocaleString()}/mo)</span>`
+              : `<span class="text-xs text-muted">(Combined Package: ₹${comboFee.toLocaleString()}/mo)</span>`
+            }
+          </span>
         </label>
       `;
     } else if (primaryCourse.includes('Mathematics') && !primaryCourse.includes('Package') && !primaryCourse.includes('Both')) {
+      const upgradePrice = Math.max(0, comboFee - mathFee);
       html += `
-        <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
-          <input type="checkbox" id="recCombineBoth" data-price="2000" data-name="${clsName} Physics (Combined Physics + Mathematics)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
-          <span><i class="fa-solid fa-atom c-gold"></i> Upgrade &amp; Add <strong>${clsName} Physics</strong> — <span class="chip chip-amber text-xs" style="font-weight:800;">+₹2,000/mo (Combine Both Package for ₹3,500/mo)</span></span>
+        <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;flex-wrap:wrap;" class="text-sm">
+          <input type="checkbox" id="recCombineBoth" data-price="${upgradePrice}" data-name="${clsName} Physics (Combined Package)" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCombineBoth') ? 'checked' : ''} />
+          <span>
+            <i class="fa-solid fa-atom c-gold"></i> Upgrade &amp; Add <strong>${clsName} Physics</strong> — 
+            <span class="chip chip-amber text-xs" style="font-weight:800;">+₹${upgradePrice.toLocaleString()}/mo</span>
+            ${comboSavings > 0 
+              ? `<span class="chip chip-green text-xs" style="font-weight:800;"><i class="fa-solid fa-tag"></i> Save ₹${comboSavings.toLocaleString()} OFF Combo! (Total: ₹${comboFee.toLocaleString()}/mo)</span>`
+              : `<span class="text-xs text-muted">(Combined Package: ₹${comboFee.toLocaleString()}/mo)</span>`
+            }
+          </span>
         </label>
       `;
     }
 
-    // Always offer Class 11/12 Computer Science Add-on for Class 11/12
-    html += `
-      <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
-        <input type="checkbox" id="recCoding11" data-price="1500" data-name="Class 11 & 12 Computer Science / Python" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCoding11') ? 'checked' : ''} />
-        <span><i class="fa-solid fa-code c-cyan"></i> Add <strong>Class 11 &amp; 12 Computer Science / Python</strong> — <span class="chip chip-green text-xs" style="font-weight:800;">₹500 OFF! Only ₹1,500/mo as Add-on</span></span>
-      </label>
-    `;
+    // School Computer Science Add-on for Class 11/12
+    const csCourse = _fetchedCourses.find(c => c.courseId === 'CRS-CS-11' || (c.title.toLowerCase().includes('computer') && c.classes && c.classes.includes('11')));
+    if (csCourse) {
+      const csFee = Number(csCourse.currentFee) || 1500;
+      const csDiscount = (csCourse.originalFee && csCourse.originalFee > csFee) ? (csCourse.originalFee - csFee) : 0;
+
+      html += `
+        <div style="background:var(--bg-card);border:1px solid var(--border-subcard);border-radius:var(--r-xs);padding:0.85rem;" class="mt-1">
+          <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;flex-wrap:wrap;" class="text-sm">
+            <input type="checkbox" id="recCoding11" data-price="${csFee}" ${csDiscount > 0 ? `data-discount="₹${csDiscount} OFF on ${csCourse.title}"` : ''} data-name="${csCourse.title}" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCoding11') ? 'checked' : ''} />
+            <span>
+              <i class="fa-solid fa-laptop-code c-cyan"></i> Add <strong>${csCourse.title}</strong> — 
+              <span class="chip chip-purple text-xs" style="font-weight:800;">+₹${csFee.toLocaleString()}/mo</span>
+              ${csDiscount > 0 ? `<span class="chip chip-green text-xs" style="font-weight:800;"><i class="fa-solid fa-bolt"></i> ₹${csDiscount.toLocaleString()} OFF!</span>` : ''}
+            </span>
+          </label>
+          <div class="mt-1 text-xs text-muted" style="line-height:1.55;padding-left:1.5rem;">
+            <i class="fa-solid fa-graduation-cap c-cyan"></i> <strong>School Academic Curriculum:</strong> 100% synchronized with CBSE / ISC / WBCHSE board textbooks, practical lab exam drills, school assignments, and board project submissions.
+          </div>
+        </div>
+      `;
+    }
   } else if (isClass9or10) {
-    html += `
-      <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
-        <input type="checkbox" id="recCoding9" data-price="1000" data-name="Class 9 & 10 Computer / Coding Class" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCoding9') ? 'checked' : ''} />
-        <span><i class="fa-solid fa-laptop-code c-cyan"></i> Add <strong>Class 9 &amp; 10 Computer / Coding Class</strong> — <span class="chip chip-green text-xs" style="font-weight:800;">₹200 OFF! Only ₹1,000/mo as Add-on</span></span>
-      </label>
-    `;
-  } else if (isClass5to8) {
-    html += `
-      <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;" class="text-sm">
-        <input type="checkbox" id="recCodingBasic" data-price="1000" data-name="Class 5–8 Python Coding Specialization" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCodingBasic') ? 'checked' : ''} />
-        <span><i class="fa-solid fa-code c-gold"></i> Add <strong>Class 5–8 Python Coding Specialization</strong> (+₹1,000 / month)</span>
-      </label>
-    `;
+    // School Computer Science Add-on for Class 9/10
+    const csCourse = _fetchedCourses.find(c => c.courseId === 'CRS-CS-9' || (c.title.toLowerCase().includes('computer') && c.classes && (c.classes.includes('9') || c.classes.includes('10'))));
+    if (csCourse) {
+      const csFee = Number(csCourse.currentFee) || 1000;
+      const csDiscount = (csCourse.originalFee && csCourse.originalFee > csFee) ? (csCourse.originalFee - csFee) : 0;
+
+      html += `
+        <div style="background:var(--bg-card);border:1px solid var(--border-subcard);border-radius:var(--r-xs);padding:0.85rem;" class="mt-1">
+          <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;flex-wrap:wrap;" class="text-sm">
+            <input type="checkbox" id="recCoding9" data-price="${csFee}" ${csDiscount > 0 ? `data-discount="₹${csDiscount} OFF on ${csCourse.title}"` : ''} data-name="${csCourse.title}" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCoding9') ? 'checked' : ''} />
+            <span>
+              <i class="fa-solid fa-laptop-code c-cyan"></i> Add <strong>${csCourse.title}</strong> — 
+              <span class="chip chip-purple text-xs" style="font-weight:800;">+₹${csFee.toLocaleString()}/mo</span>
+              ${csDiscount > 0 ? `<span class="chip chip-green text-xs" style="font-weight:800;"><i class="fa-solid fa-bolt"></i> ₹${csDiscount.toLocaleString()} OFF!</span>` : ''}
+            </span>
+          </label>
+          <div class="mt-1 text-xs text-muted" style="line-height:1.55;padding-left:1.5rem;">
+            <i class="fa-solid fa-graduation-cap c-cyan"></i> <strong>School Academic Curriculum:</strong> Covers full school syllabus (CBSE / ICSE / WBBSE), lab practicals, algorithmic logic, and board exam drills.
+          </div>
+        </div>
+      `;
+    }
   }
+
+  // 2. PYTHON PROGRAMMING SPECIALIZATION (CLASS 5 TO 12) - AVAILABLE ACROSS ALL ACADEMIC COURSES
+  const pytCourse = _fetchedCourses.find(c => c.courseId === 'CRS-PYT' || c.title.toLowerCase().includes('python')) || { currentFee: 1000, title: 'Python Coding Specialization (Class 5 to 12)' };
+  const pytFee = Number(pytCourse.currentFee) || 1000;
+  const pytDiscount = (pytCourse.originalFee && pytCourse.originalFee > pytFee) ? (pytCourse.originalFee - pytFee) : 0;
+  const pytTitle = 'Python Coding Specialization (Class 5 to 12)';
+
+  html += `
+    <div style="background:var(--bg-card);border:1px solid var(--border-subcard);border-radius:var(--r-xs);padding:0.85rem;" class="mt-1">
+      <label style="display:flex;align-items:center;gap:0.65rem;cursor:pointer;flex-wrap:wrap;" class="text-sm">
+        <input type="checkbox" id="recCodingBasic" data-price="${pytFee}" ${pytDiscount > 0 ? `data-discount="₹${pytDiscount} OFF on ${pytTitle}"` : ''} data-name="${pytTitle}" onchange="updateMultiCourseSummary()" ${checkedIds.has('recCodingBasic') ? 'checked' : ''} />
+        <span>
+          <i class="fa-solid fa-code c-gold"></i> Add <strong>${pytTitle}</strong> — 
+          <span class="chip chip-purple text-xs" style="font-weight:800;">+₹${pytFee.toLocaleString()}/mo</span>
+          ${pytDiscount > 0 ? `<span class="chip chip-green text-xs" style="font-weight:800;"><i class="fa-solid fa-bolt"></i> ₹${pytDiscount.toLocaleString()} OFF!</span>` : ''}
+        </span>
+      </label>
+      <div class="mt-1" style="font-size:0.8rem;line-height:1.55;color:var(--text-muted);padding-left:1.5rem;">
+        <strong class="c-gold"><i class="fa-solid fa-code"></i> Python Programming &amp; Practical Development:</strong>
+        <ul style="margin:0.25rem 0 0 1.1rem;list-style-type:disc;">
+          <li>Build a strong foundation in Python from basic syntax to advanced programming concepts.</li>
+          <li>Learn Object-Oriented Programming (OOP), data structures, file handling, and error handling.</li>
+          <li>Develop real-world projects such as automation tools, desktop applications, and web applications.</li>
+          <li>Introduction to Data Science, Artificial Intelligence, and Machine Learning using Python.</li>
+        </ul>
+      </div>
+    </div>
+  `;
 
   if (html) {
     container.innerHTML = html;
@@ -214,7 +293,6 @@ function updateMultiCourseSummary() {
   if (matched && matched.currentFee !== undefined) {
     primaryPrice = matched.currentFee;
   } else {
-    // Fallback logic if _fetchedCourses is not loaded yet
     if (primaryCourse.includes('Combined') || primaryCourse.includes('Both') || primaryCourse.includes('Package')) {
       primaryPrice = 3500;
     } else if (primaryCourse.includes('Physics') || primaryCourse.includes('Mathematics')) {
@@ -240,12 +318,10 @@ function updateMultiCourseSummary() {
       const price = Number(cb.dataset.price) || 0;
       const name = cb.dataset.name || 'Add-on';
       totalFee += price;
-      items.push(`${name} (+₹${price}/mo)`);
+      items.push(`${name} (+₹${price.toLocaleString()}/mo)`);
 
-      if (cb.id === 'recCoding11') {
-        discountsApplied.push('₹500 OFF on Class 11/12 Computer Science');
-      } else if (cb.id === 'recCoding9') {
-        discountsApplied.push('₹200 OFF on Class 9/10 Computer Class');
+      if (cb.dataset.discount) {
+        discountsApplied.push(cb.dataset.discount);
       }
     });
   }
@@ -253,16 +329,37 @@ function updateMultiCourseSummary() {
   _lastCalculatedTotalFee = totalFee;
   _lastCalculatedItems = [...items];
 
+  const isPythonSelected = items.some(it => it.toLowerCase().includes('python') || primaryCourse.toLowerCase().includes('python'));
+  const isSchoolCsSelected = items.some(it => it.toLowerCase().includes('computer') && !it.toLowerCase().includes('python'));
+
   summaryBox.innerHTML = `
-    <div style="background:rgba(255,183,3,0.06);border:1.5px solid var(--gold);padding:1rem;border-radius:var(--r-sm);" class="mt-2 mb-2">
+    <div style="background:rgba(255,183,3,0.06);border:1.5px solid var(--gold);padding:1.15rem;border-radius:var(--r-sm);" class="mt-2 mb-2">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
         <span class="text-xs text-muted font-bold"><i class="fa-solid fa-calculator c-gold"></i> Live Course Fee Calculation Breakdown:</span>
         <span class="chip chip-purple font-bold" style="font-size:1.05rem;">Total Monthly Fee: ₹${totalFee.toLocaleString()} / mo</span>
       </div>
       <div class="text-sm font-bold c-gold mb-1">${items.join(' + ')}</div>
       ${discountsApplied.length ? `
-        <div class="text-xs c-cyan font-bold" style="background:rgba(0,240,255,0.08);padding:0.4rem 0.6rem;border-radius:var(--r-xs);display:inline-block;">
+        <div class="text-xs c-cyan font-bold mb-1" style="background:rgba(0,240,255,0.08);padding:0.4rem 0.6rem;border-radius:var(--r-xs);display:inline-block;">
           <i class="fa-solid fa-tag"></i> Special Discount Applied: ${discountsApplied.join(', ')}
+        </div>
+      ` : ''}
+
+      ${isPythonSelected ? `
+        <div class="mt-2 pt-2" style="border-top:1px dashed rgba(255,183,3,0.35);font-size:0.82rem;line-height:1.6;color:var(--text-muted);">
+          <strong class="c-gold"><i class="fa-solid fa-code"></i> Python Programming &amp; Practical Development:</strong>
+          <ul style="margin:0.35rem 0 0 1.2rem;list-style-type:disc;">
+            <li>Build a strong foundation in Python from basic syntax to advanced programming concepts.</li>
+            <li>Learn Object-Oriented Programming (OOP), data structures, file handling, and error handling.</li>
+            <li>Develop real-world projects such as automation tools, desktop applications, and web applications.</li>
+            <li>Introduction to Data Science, Artificial Intelligence, and Machine Learning using Python.</li>
+          </ul>
+        </div>
+      ` : ''}
+
+      ${(isSchoolCsSelected && !isPythonSelected) ? `
+        <div class="mt-2 pt-2 text-xs text-muted" style="border-top:1px dashed rgba(0,240,255,0.35);line-height:1.55;">
+          <strong class="c-cyan"><i class="fa-solid fa-graduation-cap"></i> School Academic Curriculum Alignment:</strong> 100% synchronized with your school board curriculum (CBSE / ICSE / ISC / WBBSE / WBCHSE), practical lab exam drills, school assignments, and board project work.
         </div>
       ` : ''}
     </div>
@@ -414,7 +511,7 @@ async function checkStatus() {
       <div class="status-result-card mt-2 card card-p2" style="border-color:var(--gold);background:rgba(255,183,3,0.05);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
           <div>
-            <div style="font-weight:800;font-size:1.1rem;color:#fff;">${app.name}</div>
+            <div style="font-weight:800;font-size:1.1rem;color:var(--text);">${app.name}</div>
             <div class="text-xs text-muted">App Reference ID: <strong class="c-gold">${app.applicationId}</strong> &nbsp;•&nbsp; ${app.targetCourse}</div>
           </div>
           <span class="chip ${statusChip}" style="font-size:0.85rem;font-weight:800;">${app.status}</span>
@@ -427,11 +524,11 @@ async function checkStatus() {
               <i class="fa-solid fa-circle-check"></i> Admission Approved! Your Portal Credentials:
             </h4>
             <div class="grid g2 mb-2">
-              <div style="background:rgba(0,0,0,0.3);padding:0.75rem;border-radius:var(--r-xs);">
+              <div style="background:var(--bg-subcard);border:1px solid var(--border-subcard);padding:0.75rem;border-radius:var(--r-xs);">
                 <div class="text-xs text-muted">Assigned Student ID:</div>
                 <div style="font-family:var(--font-heading);font-size:1.3rem;font-weight:800;" class="c-gold">${app.studentIdAssigned}</div>
               </div>
-              <div style="background:rgba(0,0,0,0.3);padding:0.75rem;border-radius:var(--r-xs);">
+              <div style="background:var(--bg-subcard);border:1px solid var(--border-subcard);padding:0.75rem;border-radius:var(--r-xs);">
                 <div class="text-xs text-muted">Unique Portal Password (Sent to Gmail):</div>
                 <div style="font-family:var(--font-heading);font-size:1.3rem;font-weight:800;" class="c-cyan"><i class="fa-solid fa-key text-xs"></i> ${uniquePass}</div>
               </div>
