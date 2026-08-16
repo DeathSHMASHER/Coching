@@ -75,6 +75,17 @@ async function handleStudentLogin(e) {
 async function _renderStudentDash() {
   if (!_currentStudent) return;
 
+  // Fetch live student profile directly from MongoDB Atlas to guarantee updated fees, batch & status
+  try {
+    const res = await apiRequest('/students/' + _currentStudent.studentId + '?t=' + Date.now());
+    if (res && res.success && res.student) {
+      _currentStudent = { ..._currentStudent, ...res.student };
+      sessionStorage.setItem('stuData', JSON.stringify(_currentStudent));
+    }
+  } catch (e) {
+    console.warn('Live student profile sync notice:', e.message);
+  }
+
   const authBox = document.getElementById('studentLoginSection') || document.getElementById('studentAuthBox');
   const dashBox = document.getElementById('studentDashboard') || document.getElementById('studentDash');
 
@@ -252,21 +263,27 @@ async function _loadStudentLiveClasses() {
 // 1. ATTENDANCE
 async function _loadAttendance() {
   if (!_currentStudent) return;
-  const res = await apiRequest('/attendance/' + _currentStudent.studentId);
+  const res = await apiRequest('/attendance/' + _currentStudent.studentId + '?t=' + Date.now());
   if (!res.success) return;
 
-  const s = res.summary;
+  const s = res.summary || {};
   const ovAttPct = document.getElementById('ovAttPct');
   const ovAttCount = document.getElementById('ovAttCount');
-  if (ovAttPct) ovAttPct.textContent = s.percentage + '%';
-  if (ovAttCount) ovAttCount.textContent = `${s.present} / ${s.totalLectures} Lectures`;
+
+  const present = s.presentCount !== undefined ? s.presentCount : (s.present || 0);
+  const total = s.totalDays !== undefined ? s.totalDays : (s.totalLectures || 0);
+  const percentage = s.percentage !== undefined ? s.percentage : 100;
+
+  if (ovAttPct) ovAttPct.textContent = percentage + '%';
+  if (ovAttCount) ovAttCount.textContent = `${present} / ${total} Lectures`;
 
   const logsContainer = document.getElementById('attLogsFeed');
+  const records = res.logs || res.records || [];
   if (logsContainer) {
-    if (!res.records || !res.records.length) {
+    if (!records.length) {
       logsContainer.innerHTML = '<p class="text-muted text-sm">No attendance records logged yet.</p>';
     } else {
-      logsContainer.innerHTML = res.records.map(r => `
+      logsContainer.innerHTML = records.map(r => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0.9rem;background:var(--bg-subcard);border-radius:var(--r-sm);margin-bottom:0.5rem;border:1px solid var(--border-subcard);">
           <div>
             <div style="font-weight:700;font-size:0.9rem;">${r.topicCovered || 'Lecture Session'}</div>
@@ -584,19 +601,27 @@ async function handleRaiseDoubt(e) {
   }
 }
 
-// 4. STUDENT FEE LEDGER
+// 4. STUDENT FEE LEDGER (LIVE DB SYNC)
 async function _loadStudentFeeLedger() {
   if (!_currentStudent) return;
   const feeStatusEl = document.getElementById('stuFeeStatus');
   const feeDueEl = document.getElementById('stuFeeDue');
 
+  const status = _currentStudent.feeStatus || 'Paid';
+  const due = Number(_currentStudent.feeDueAmount) || 0;
+
   if (feeStatusEl) {
-    const status = _currentStudent.feeStatus || 'Paid';
-    feeStatusEl.textContent = status;
-    feeStatusEl.className = 'chip ' + (status === 'Paid' ? 'chip-green' : status === 'Partial' ? 'chip-amber' : 'chip-red');
+    const chipClass = status === 'Paid' ? 'chip-green' : status === 'Partial' ? 'chip-amber' : 'chip-red';
+    feeStatusEl.innerHTML = `<span class="chip ${chipClass}">${status}</span>`;
   }
   if (feeDueEl) {
-    feeDueEl.textContent = _currentStudent.feeDueAmount ? '₹' + _currentStudent.feeDueAmount : '₹0 (Clear)';
+    if (status === 'Paid' || due <= 0) {
+      feeDueEl.textContent = '₹0 (Clear)';
+      feeDueEl.className = 'text-xs text-dim';
+    } else {
+      feeDueEl.textContent = `₹${due.toLocaleString()}`;
+      feeDueEl.className = 'text-xs text-dim';
+    }
   }
 }
 
