@@ -1,14 +1,17 @@
 const nodemailer = require('nodemailer');
 
 // Universal Email Dispatcher with Dedicated Routing:
-// - Gmail SMTP for Director Admin Alerts (shahriyartaufik@gmail.com)
+// - Gmail SMTP for Director Admin & Academy Alerts (shahriyartaufik@gmail.com & jigyasascienceakademy@gmail.com)
 // - Resend API for Outgoing Student Credentials (student emails)
-async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission Cell Jigyassa', preferredProvider = 'auto' }) {
+async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission Cell Jigyasa', preferredProvider = 'auto' }) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
 
-  // ROUTE A: DIRECT GMAIL SMTP (PREFERRED FOR DIRECTOR ALERTS)
+  const toAddress = Array.isArray(to) ? to.join(', ') : to;
+  const toArray = Array.isArray(to) ? to : [to];
+
+  // ROUTE A: DIRECT GMAIL SMTP (PREFERRED FOR DIRECTOR & ACADEMY ALERTS)
   if (preferredProvider === 'smtp') {
     if (smtpUser && smtpPass && !smtpPass.includes('your_') && !smtpUser.includes('your_')) {
       try {
@@ -21,12 +24,12 @@ async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission C
 
         const info = await transporter.sendMail({
           from: `"${fromName}" <${smtpUser}>`,
-          to: to,
+          to: toAddress,
           subject: subject,
           html: htmlContent
         });
 
-        console.log(`📧 [Gmail SMTP Success] Dispatched alert to Director inbox ${to}: ${info.messageId}`);
+        console.log(`📧 [Gmail SMTP Success] Dispatched alert to ${toAddress}: ${info.messageId}`);
         return { success: true, provider: 'nodemailer', id: info.messageId };
       } catch (err) {
         console.warn(`⚠️ [Gmail SMTP Error]: ${err.message}. Trying Resend fallback...`);
@@ -37,7 +40,7 @@ async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission C
   // ROUTE B: RESEND API (PREFERRED FOR OUTGOING STUDENT CREDENTIALS)
   if (resendApiKey && !resendApiKey.includes('your_')) {
     try {
-      const fromAddress = process.env.RESEND_FROM_EMAIL || 'Admission Cell Jigyassa <onboarding@resend.dev>';
+      const fromAddress = process.env.RESEND_FROM_EMAIL || 'Admission Cell Jigyasa <onboarding@resend.dev>';
       const resp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -46,7 +49,7 @@ async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission C
         },
         body: JSON.stringify({
           from: fromAddress,
-          to: Array.isArray(to) ? to : [to],
+          to: toArray,
           subject: subject,
           html: htmlContent
         })
@@ -54,7 +57,7 @@ async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission C
 
       const data = await resp.json();
       if (resp.ok) {
-        console.log(`🚀 [Resend API Success] Dispatched credentials to student ${to}: ${data.id}`);
+        console.log(`🚀 [Resend API Success] Dispatched email to ${toArray.join(', ')}: ${data.id}`);
         return { success: true, provider: 'resend', id: data.id };
       } else {
         console.warn(`⚠️ [Resend API Notice]: ${data.message || JSON.stringify(data)}`);
@@ -76,12 +79,12 @@ async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission C
 
       const info = await transporter.sendMail({
         from: `"${fromName}" <${smtpUser}>`,
-        to: to,
+        to: toAddress,
         subject: subject,
         html: htmlContent
       });
 
-      console.log(`📧 [Nodemailer SMTP Fallback Success] Dispatched to ${to}: ${info.messageId}`);
+      console.log(`📧 [Nodemailer SMTP Fallback Success] Dispatched to ${toAddress}: ${info.messageId}`);
       return { success: true, provider: 'nodemailer', id: info.messageId };
     } catch (err) {
       console.warn(`⚠️ [Nodemailer Fallback Error]: ${err.message}`);
@@ -89,13 +92,17 @@ async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission C
     }
   }
 
-  console.log(`ℹ️ [Email Simulated] To: ${to} | Subject: "${subject}"`);
+  console.log(`ℹ️ [Email Simulated] To: ${toAddress} | Subject: "${subject}"`);
   return { success: true, simulated: true };
 }
 
-// Send Admin Email Notification for New Admission Application directly to Director via Gmail SMTP
+// Send Admin Email Notification for New Admission Application directly to Director & Academy
 async function sendAdmissionEmail(admission) {
   const adminEmail = process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com';
+  const academyEmail = process.env.ACADEMY_EMAIL || 'jigyasascienceakademy@gmail.com';
+  
+  // Forward alert to both personal email and academy inbox
+  const recipientList = Array.from(new Set([adminEmail, academyEmail])).filter(Boolean);
   const subject = `🚨 New Admission Application Received: ${admission.applicationId} - ${admission.name}`;
 
   const htmlContent = `
@@ -153,10 +160,10 @@ async function sendAdmissionEmail(admission) {
   `;
 
   return await dispatchEmail({
-    to: adminEmail,
+    to: recipientList,
     subject: subject,
     htmlContent: htmlContent,
-    fromName: 'Admission Cell Jigyassa',
+    fromName: 'Admission Cell Jigyasa',
     preferredProvider: 'smtp'
   });
 }

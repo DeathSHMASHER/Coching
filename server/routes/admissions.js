@@ -50,10 +50,10 @@ router.post('/apply', async (req, res) => {
       mockData.admissions.unshift(payload);
     }
 
-    // Automatically send email notification to admin email
+    // Automatically send email notification to admin and academy
     try {
       const resMail = await sendAdmissionEmail(payload);
-      console.log(`📧 [Gmail Dispatch] Sent application ${appId} email alert to ${process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'}:`, resMail);
+      console.log(`📧 [Email Dispatch] Dispatched application ${appId} email alert:`, resMail);
     } catch (errMail) {
       console.error('Email dispatch error:', errMail);
     }
@@ -62,7 +62,7 @@ router.post('/apply', async (req, res) => {
       success: true,
       message: 'Admission application submitted successfully!',
       applicationId: appId,
-      emailNotified: process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'
+      emailNotified: 'jigyasascienceakademy@gmail.com'
     });
   } catch (err) {
     console.error('Error submitting application:', err);

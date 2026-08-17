@@ -399,7 +399,7 @@ async function handleQuickInquirySubmit(e) {
   btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Direct Email Request';
 
   if (res.success) {
-    showToast('Email inquiry sent live to shahriyartaufik@gmail.com!', 'success');
+    showToast('Email inquiry sent successfully to jigyasascienceakademy@gmail.com!', 'success');
     closeQuickInquiryModal();
     e.target.reset();
   } else {
