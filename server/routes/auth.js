@@ -6,6 +6,16 @@ const { mockData } = require('../config/mockStore');
 const { hashPassword, verifyPassword } = require('../config/authUtils');
 const { signToken, verifyToken } = require('../middleware/auth');
 
+const crypto = require('crypto');
+
+// Constant-time string comparison to prevent timing attacks
+function safeCompare(input, expected) {
+  if (typeof input !== 'string' || typeof expected !== 'string') return false;
+  const hashA = crypto.createHash('sha256').update(String(input)).digest();
+  const hashB = crypto.createHash('sha256').update(String(expected)).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
 // Unified Login Endpoint (Handles both Student & Admin Credentials)
 router.post('/student-login', async (req, res) => {
   try {
@@ -17,12 +27,12 @@ router.post('/student-login', async (req, res) => {
     const cleanId = String(studentId).trim();
     const cleanPass = String(password).trim();
 
-    // 1. Check if Admin credentials entered
+    // 1. Check if Admin credentials entered (timing-safe comparison)
     const requiredAdminPass = process.env.ADMIN_PASSCODE || 'adminpass';
-    if (
-      (cleanId.toLowerCase() === 'admn' || cleanId.toLowerCase() === 'admin') &&
-      (cleanPass === requiredAdminPass || cleanPass === 'adminpass')
-    ) {
+    const isAdminId = (cleanId.toLowerCase() === 'admn' || cleanId.toLowerCase() === 'admin');
+    const isAdminPass = safeCompare(cleanPass, requiredAdminPass) || safeCompare(cleanPass, 'adminpass');
+
+    if (isAdminId && isAdminPass) {
       const adminPayload = { role: 'admin', name: 'Director / Head Admin' };
       const token = signToken(adminPayload);
 
@@ -119,13 +129,13 @@ router.post('/student-login', async (req, res) => {
   }
 });
 
-// Admin Login Direct Verification
+// Admin Login Direct Verification (timing-safe)
 router.post('/admin-login', async (req, res) => {
   try {
     const { passcode } = req.body;
     const requiredPass = process.env.ADMIN_PASSCODE || 'adminpass';
 
-    if (passcode && (passcode === requiredPass || passcode === 'adminpass')) {
+    if (passcode && (safeCompare(passcode, requiredPass) || safeCompare(passcode, 'adminpass'))) {
       const adminPayload = { role: 'admin', name: 'Director / Head Admin' };
       const token = signToken(adminPayload);
 

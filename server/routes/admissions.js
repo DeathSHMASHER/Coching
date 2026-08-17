@@ -9,20 +9,52 @@ const { hashPassword } = require('../config/authUtils');
 const { sendAdmissionEmail, sendStudentCredentialsEmail } = require('../config/mailer');
 const { requireAdmin } = require('../middleware/auth');
 
+// Input sanitization helper to strip script tags and dangerous HTML characters
+function sanitizeInput(str, maxLen = 200) {
+  return String(str || '')
+    .replace(/<[^>]*>?/gm, '') // Strip HTML tags
+    .replace(/[\r\n]+/g, ' ')  // Normalize newlines
+    .trim()
+    .slice(0, maxLen);
+}
+
 // POST /api/admissions/apply - Public Submit Admission Application
 router.post('/apply', async (req, res) => {
   try {
-    const { name, email, phone, targetCourse, previousPercentage, message, calculatedFee, selectedSubjects } = req.body;
+    const { name, email, phone, targetCourse, previousPercentage, message, calculatedFee, selectedSubjects, _hp_trap, honeypot, website_hp } = req.body;
+
+    // BOT DEFENSE: Honeypot trap detection (silently drop bot submissions without email dispatch)
+    if (_hp_trap || honeypot || website_hp) {
+      console.warn('🛡️ [Security: Honeypot Triggered] Dropped automated bot submission from IP:', req.ip || req.headers['x-forwarded-for']);
+      return res.json({
+        success: true,
+        message: 'Admission application submitted successfully!',
+        applicationId: 'ADM-' + Math.floor(100 + Math.random() * 900),
+        emailNotified: 'jigyasascienceakademy@gmail.com'
+      });
+    }
 
     if (!name || !email || !phone || !targetCourse) {
       return res.status(400).json({ success: false, message: 'Name, Email, Phone, and Target Course are required.' });
     }
 
-    const cleanName = String(name).trim().slice(0, 120);
-    const cleanEmail = String(email).trim().slice(0, 120);
-    const cleanPhone = String(phone).trim().slice(0, 30);
-    const cleanCourse = String(targetCourse).trim().slice(0, 150);
-    const cleanMessage = message ? String(message).trim().slice(0, 1000) : '';
+    const cleanName = sanitizeInput(name, 120);
+    const cleanEmail = String(email || '').trim().toLowerCase().slice(0, 120);
+    const cleanPhone = String(phone || '').replace(/[^\d+ -]/g, '').trim().slice(0, 30);
+    const cleanCourse = sanitizeInput(targetCourse, 150);
+    const cleanMessage = String(message || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 1000);
+
+    // Strict Email Format Validation & Header Injection Guard
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(cleanEmail) || cleanEmail.includes('\r') || cleanEmail.includes('\n')) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid, properly formatted email address.' });
+    }
+
+    // Strict Phone Number Validation (10 to 15 digits)
+    const phoneDigits = cleanPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid 10-digit contact phone number.' });
+    }
 
     await connectDB();
     const appId = `ADM-${Math.floor(100 + Math.random() * 900)}`;
@@ -34,7 +66,7 @@ router.post('/apply', async (req, res) => {
       phone: cleanPhone,
       targetCourse: cleanCourse,
       calculatedFee: Number(calculatedFee) || 0,
-      selectedSubjects: Array.isArray(selectedSubjects) ? selectedSubjects.slice(0, 20) : [],
+      selectedSubjects: Array.isArray(selectedSubjects) ? selectedSubjects.map(s => sanitizeInput(s, 80)).slice(0, 20) : [],
       previousPercentage: Number(previousPercentage) || 0,
       message: cleanMessage,
       status: 'Pending',
@@ -66,7 +98,7 @@ router.post('/apply', async (req, res) => {
     });
   } catch (err) {
     console.error('Error submitting application:', err);
-    res.status(500).json({ success: false, message: 'Error submitting admission application: ' + err.message });
+    res.status(500).json({ success: false, message: 'An error occurred while submitting your application. Please try again.' });
   }
 });
 

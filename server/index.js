@@ -19,26 +19,48 @@ const liveClassesRoutes = require('./routes/liveClasses');
 
 const app = express();
 
-// Security Headers Middleware
+// Enterprise Security Headers Middleware
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'; object-src 'none'; base-uri 'self';");
   next();
 });
 
-// Middleware
+// Middleware & Strict Body Size Limits (Prevents Large Payload DoS)
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(express.json({ limit: '500kb' }));
+app.use(express.urlencoded({ extended: true, limit: '500kb' }));
+
+// Deep NoSQL Operator Sanitizer (prevents Mongo query injection via $gt, $ne, etc.)
+function sanitizeNoSql(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeNoSql);
+  const clean = {};
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith('$') || key.includes('.')) continue;
+    clean[key] = sanitizeNoSql(obj[key]);
+  }
+  return clean;
+}
+
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') req.body = sanitizeNoSql(req.body);
+  if (req.query && typeof req.query === 'object') req.query = sanitizeNoSql(req.query);
+  if (req.params && typeof req.params === 'object') req.params = sanitizeNoSql(req.params);
+  next();
+});
 
 // Lightweight In-Memory Rate Limiter (Serverless & Standalone Compatible)
 function createRateLimiter(maxRequests = 50, windowMs = 15 * 60 * 1000, message = 'Too many requests. Please try again later.') {
   const ipBuckets = new Map();
 
   return (req, res, next) => {
-    // Get client IP
     const clientIp = req.headers['x-forwarded-for']
       ? req.headers['x-forwarded-for'].split(',')[0].trim()
       : req.socket.remoteAddress || 'unknown-ip';
@@ -64,8 +86,9 @@ function createRateLimiter(maxRequests = 50, windowMs = 15 * 60 * 1000, message 
   };
 }
 
-const authLimiter = createRateLimiter(30, 15 * 60 * 1000, 'Too many login attempts. Please wait 15 minutes before trying again.');
-const admissionApplyLimiter = createRateLimiter(15, 15 * 60 * 1000, 'Too many application submissions from your device. Please try again later.');
+const authLimiter = createRateLimiter(12, 15 * 60 * 1000, 'Too many login attempts. Please wait 15 minutes before trying again.');
+const admissionApplyLimiter = createRateLimiter(8, 15 * 60 * 1000, 'Submission rate limit reached. Please wait 15 minutes before submitting again.');
+const apiGlobalLimiter = createRateLimiter(150, 5 * 60 * 1000, 'High request volume detected from your IP. Please try again in a few moments.');
 
 // Netlify Serverless Function Path Normalization Middleware
 app.use((req, res, next) => {
@@ -151,6 +174,16 @@ app.get('*', (req, res) => {
     return res.status(404).json({ success: false, message: 'API Endpoint Not Found' });
   }
   res.sendFile(path.join(publicPath, 'index.html'));
+});
+
+// Global Error Sanitization Middleware (Masks internal stack traces in production)
+app.use((err, req, res, next) => {
+  console.error('🛡️ [API Exception Handler]:', err.message);
+  if (res.headersSent) return next(err);
+  return res.status(err.status || 500).json({
+    success: false,
+    message: err.message && err.status < 500 ? err.message : 'An internal security exception occurred. Please try again.'
+  });
 });
 
 // Start Server locally if run directly

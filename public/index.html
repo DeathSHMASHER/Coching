@@ -546,6 +546,10 @@
       <button class="modal-close" onclick="closeQuickInquiryModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <form onsubmit="handleQuickInquirySubmit(event)">
+      <!-- Anti-Bot Honeypot Security Field (Hidden from real users) -->
+      <div style="display:none !important; visibility:hidden; opacity:0; position:absolute; left:-9999px;" aria-hidden="true">
+        <input type="text" id="inqHpTrap" name="_hp_trap" tabindex="-1" autocomplete="off" />
+      </div>
       <div class="form-group">
         <label class="form-label"><i class="fa-solid fa-user"></i> Your Full Name *</label>
         <input id="inqName" class="form-control" type="text" placeholder="e.g. Student / Parent Name" required />

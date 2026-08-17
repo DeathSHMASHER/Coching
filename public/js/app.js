@@ -387,12 +387,15 @@ async function handleQuickInquirySubmit(e) {
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Email…';
 
+  const _hp_trap = (document.getElementById('inqHpTrap') ? document.getElementById('inqHpTrap').value : '').trim();
+
   const res = await apiRequest('/admissions/apply', 'POST', {
     name,
     email,
     phone,
     targetCourse: 'Direct Website Email Inquiry',
-    message: message || 'Inquiry sent via Lead Teacher Profile Button'
+    message: message || 'Inquiry sent via Lead Teacher Profile Button',
+    _hp_trap
   });
 
   btn.disabled = false;

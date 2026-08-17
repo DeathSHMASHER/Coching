@@ -393,7 +393,8 @@ async function handleAdmission(e) {
     previousPercentage: document.getElementById('admMarks').value || 0,
     message:            combinedMsg,
     calculatedFee:      _lastCalculatedTotalFee,
-    selectedSubjects:   _lastCalculatedItems
+    selectedSubjects:   _lastCalculatedItems,
+    _hp_trap:           (document.getElementById('admHpTrap') ? document.getElementById('admHpTrap').value : '').trim()
   };
 
   const btn = e.target.querySelector('[type=submit]');

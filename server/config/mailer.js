@@ -96,6 +96,21 @@ async function dispatchEmail({ to, subject, htmlContent, fromName = 'Admission C
   return { success: true, simulated: true };
 }
 
+// Helper to safely escape HTML entities preventing HTML injection in emails
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Helper to sanitize headers preventing Email Header Injection (CRLF)
+function sanitizeHeader(str) {
+  return String(str || '').replace(/[\r\n]+/g, ' ').trim();
+}
+
 // Send Admin Email Notification for New Admission Application directly to Director & Academy
 async function sendAdmissionEmail(admission) {
   const adminEmail = process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com';
@@ -103,7 +118,20 @@ async function sendAdmissionEmail(admission) {
   
   // Forward alert to both personal email and academy inbox
   const recipientList = Array.from(new Set([adminEmail, academyEmail])).filter(Boolean);
-  const subject = `🚨 New Admission Application Received: ${admission.applicationId} - ${admission.name}`;
+  const safeAppId = sanitizeHeader(admission.applicationId);
+  const safeName = sanitizeHeader(admission.name);
+  const subject = `🚨 New Admission Application Received: ${safeAppId} - ${safeName}`;
+
+  const cleanName = escapeHtml(admission.name);
+  const cleanEmail = escapeHtml(admission.email);
+  const cleanPhone = escapeHtml(admission.phone);
+  const cleanCourse = escapeHtml(admission.targetCourse);
+  const cleanFee = admission.calculatedFee ? Number(admission.calculatedFee).toLocaleString() : 'N/A';
+  const cleanSubjects = Array.isArray(admission.selectedSubjects) && admission.selectedSubjects.length
+    ? admission.selectedSubjects.map(s => escapeHtml(s)).join(' + ')
+    : cleanCourse;
+  const cleanScore = escapeHtml(admission.previousPercentage || 'N/A');
+  const cleanMsg = escapeHtml(admission.message || 'No message provided');
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #040711; color: #ffffff; border: 1px solid #ffb703; border-radius: 12px; padding: 24px;">
@@ -115,39 +143,39 @@ async function sendAdmissionEmail(admission) {
       <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold; width: 35%;">Application Ref ID:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #00f0ff; font-weight: bold; font-size: 16px;">${admission.applicationId}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #00f0ff; font-weight: bold; font-size: 16px;">${escapeHtml(admission.applicationId)}</td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Applicant Name:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff; font-weight: bold;">${admission.name}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff; font-weight: bold;">${cleanName}</td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Email Address:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff;"><a href="mailto:${admission.email}" style="color: #3b82f6;">${admission.email}</a></td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff;"><a href="mailto:${cleanEmail}" style="color: #3b82f6;">${cleanEmail}</a></td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Contact Phone:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff;"><a href="tel:${admission.phone}" style="color: #10b981;">${admission.phone}</a></td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff;"><a href="tel:${cleanPhone}" style="color: #10b981;">${cleanPhone}</a></td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Target Program:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffb703; font-weight: bold;">${admission.targetCourse}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffb703; font-weight: bold;">${cleanCourse}</td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Calculated Monthly Fee:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #a855f7; font-weight: bold; font-size: 16px;">₹${admission.calculatedFee ? Number(admission.calculatedFee).toLocaleString() : 'N/A'} / month</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #a855f7; font-weight: bold; font-size: 16px;">₹${cleanFee} / month</td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Opted Programs &amp; Add-ons:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #00f0ff; font-weight: bold;">${Array.isArray(admission.selectedSubjects) && admission.selectedSubjects.length ? admission.selectedSubjects.join(' + ') : admission.targetCourse}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #00f0ff; font-weight: bold;">${cleanSubjects}</td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Previous Score (%):</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff;">${admission.previousPercentage || 'N/A'}%</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff;">${cleanScore}%</td>
         </tr>
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #cbd5e1; font-weight: bold;">Statement / Message:</td>
-          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff; font-style: italic;">"${admission.message || 'No message provided'}"</td>
+          <td style="padding: 10px; border-bottom: 1px solid #1a2744; color: #ffffff; font-style: italic;">"${cleanMsg}"</td>
         </tr>
       </table>
 

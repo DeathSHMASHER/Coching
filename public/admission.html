@@ -145,6 +145,10 @@
         </div>
 
         <form id="admissionForm" onsubmit="handleAdmission(event)">
+          <!-- Anti-Bot Honeypot Security Field (Hidden from real users) -->
+          <div style="display:none !important; visibility:hidden; opacity:0; position:absolute; left:-9999px;" aria-hidden="true">
+            <input type="text" id="admHpTrap" name="_hp_trap" tabindex="-1" autocomplete="off" />
+          </div>
           <div class="grid g2">
             <div class="form-group">
               <label class="form-label"><i class="fa-solid fa-user"></i> Full Name *</label>
