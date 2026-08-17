@@ -12,6 +12,8 @@ const seedDemoDataIfNeeded = async () => {
     const Feedback = require('../models/Feedback');
     const Notice = require('../models/Notice');
 
+    const { hashPassword } = require('./authUtils');
+
     // Seed Demo Student if missing
     const existingStudt = await Student.findOne({ studentId: 'studt' });
     if (!existingStudt) {
@@ -22,7 +24,7 @@ const seedDemoDataIfNeeded = async () => {
         phone: '+91 98765 43210',
         course: 'IIT-JEE Masterclass (Class 12)',
         batch: 'Morning Batch Alpha',
-        password: '1234',
+        password: hashPassword('1234'),
         status: 'Active',
         feeStatus: 'Paid',
         feeDueAmount: 0,
@@ -39,7 +41,7 @@ const seedDemoDataIfNeeded = async () => {
         phone: '+91 98765 43210',
         course: 'IIT-JEE Masterclass (Class 12)',
         batch: 'Morning Batch Alpha',
-        password: '1234',
+        password: hashPassword('1234'),
         status: 'Active',
         feeStatus: 'Paid',
         feeDueAmount: 0,
@@ -134,7 +136,7 @@ const connectDB = async () => {
   }
 
   try {
-    await mongoose.connect(mongoURI);
+    await mongoose.connect(mongoURI, { serverSelectionTimeoutMS: 3000 });
     isConnected = true;
     useMock = false;
     console.log('✅ Connected to MongoDB Atlas Cloud Database successfully.');

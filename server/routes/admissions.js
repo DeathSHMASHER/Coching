@@ -5,7 +5,9 @@ const Admission = require('../models/Admission');
 const Student = require('../models/Student');
 const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { hashPassword } = require('../config/authUtils');
 const { sendAdmissionEmail, sendStudentCredentialsEmail } = require('../config/mailer');
+const { requireAdmin } = require('../middleware/auth');
 
 // POST /api/admissions/apply - Public Submit Admission Application
 router.post('/apply', async (req, res) => {
@@ -16,19 +18,25 @@ router.post('/apply', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name, Email, Phone, and Target Course are required.' });
     }
 
+    const cleanName = String(name).trim().slice(0, 120);
+    const cleanEmail = String(email).trim().slice(0, 120);
+    const cleanPhone = String(phone).trim().slice(0, 30);
+    const cleanCourse = String(targetCourse).trim().slice(0, 150);
+    const cleanMessage = message ? String(message).trim().slice(0, 1000) : '';
+
     await connectDB();
     const appId = `ADM-${Math.floor(100 + Math.random() * 900)}`;
 
     const payload = {
       applicationId: appId,
-      name,
-      email,
-      phone,
-      targetCourse,
-      calculatedFee: calculatedFee || 0,
-      selectedSubjects: Array.isArray(selectedSubjects) ? selectedSubjects : [],
-      previousPercentage: previousPercentage || 0,
-      message: message || '',
+      name: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      targetCourse: cleanCourse,
+      calculatedFee: Number(calculatedFee) || 0,
+      selectedSubjects: Array.isArray(selectedSubjects) ? selectedSubjects.slice(0, 20) : [],
+      previousPercentage: Number(previousPercentage) || 0,
+      message: cleanMessage,
       status: 'Pending',
       appliedAt: new Date()
     };
@@ -42,7 +50,7 @@ router.post('/apply', async (req, res) => {
       mockData.admissions.unshift(payload);
     }
 
-    // Automatically send email notification to shahriyartaufik@gmail.com
+    // Automatically send email notification to admin email
     try {
       const resMail = await sendAdmissionEmail(payload);
       console.log(`📧 [Gmail Dispatch] Sent application ${appId} email alert to ${process.env.ADMIN_EMAIL || 'shahriyartaufik@gmail.com'}:`, resMail);
@@ -62,7 +70,7 @@ router.post('/apply', async (req, res) => {
   }
 });
 
-// GET /api/admissions/status/:query - Track Application Status
+// GET /api/admissions/status/:query - Track Application Status (Public)
 router.get('/status/:query', async (req, res) => {
   try {
     await connectDB();
@@ -115,8 +123,8 @@ router.get('/status/:query', async (req, res) => {
   }
 });
 
-// GET /api/admissions/all - Admin Fetch All Applications
-router.get('/all', async (req, res) => {
+// GET /api/admissions/all - Admin Fetch All Applications (Protected: Admin Only)
+router.get('/all', requireAdmin, async (req, res) => {
   try {
     await connectDB();
     let list = [];
@@ -133,8 +141,8 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// PUT /api/admissions/:id/status - Admin Approve / Reject Application
-router.put('/:id/status', async (req, res) => {
+// PUT /api/admissions/:id/status - Admin Approve / Reject Application (Protected: Admin Only)
+router.put('/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
     const appId = req.params.id.trim().toUpperCase();
@@ -163,14 +171,10 @@ router.put('/:id/status', async (req, res) => {
           assignedId = updatedApp.studentIdAssigned;
         }
 
-        if (!updatedApp.assignedPassword) {
-          uniquePassword = 'JIG#' + Math.floor(1000 + Math.random() * 9000);
-          updatedApp.assignedPassword = uniquePassword;
-        } else {
-          uniquePassword = updatedApp.assignedPassword;
-        }
+        uniquePassword = 'JIG#' + Math.floor(1000 + Math.random() * 9000);
+        const hashedPassword = hashPassword(uniquePassword);
 
-        // Auto create or sync student account with unique password
+        // Auto create or sync student account with hashed password
         let existingStu = mockData.students.find(s => s.studentId === assignedId);
         if (!existingStu) {
           mockData.students.unshift({
@@ -181,7 +185,7 @@ router.put('/:id/status', async (req, res) => {
             phone: updatedApp.phone,
             course: updatedApp.targetCourse,
             batch: 'Morning Batch Alpha',
-            password: uniquePassword,
+            password: hashedPassword,
             admissionDate: new Date(),
             status: 'Active',
             feeStatus: 'Paid',
@@ -189,7 +193,7 @@ router.put('/:id/status', async (req, res) => {
             feeDueDate: 'N/A'
           });
         } else {
-          existingStu.password = uniquePassword;
+          existingStu.password = hashedPassword;
         }
       }
     } else {
@@ -207,12 +211,8 @@ router.put('/:id/status', async (req, res) => {
           assignedId = updatedApp.studentIdAssigned;
         }
 
-        if (!updatedApp.assignedPassword) {
-          uniquePassword = 'JIG#' + Math.floor(1000 + Math.random() * 9000);
-          updatedApp.assignedPassword = uniquePassword;
-        } else {
-          uniquePassword = updatedApp.assignedPassword;
-        }
+        uniquePassword = 'JIG#' + Math.floor(1000 + Math.random() * 9000);
+        const hashedPassword = hashPassword(uniquePassword);
 
         let existingStu = await Student.findOne({ studentId: assignedId });
         if (!existingStu) {
@@ -223,7 +223,7 @@ router.put('/:id/status', async (req, res) => {
             phone: updatedApp.phone,
             course: updatedApp.targetCourse,
             batch: 'Morning Batch Alpha',
-            password: uniquePassword,
+            password: hashedPassword,
             admissionDate: new Date(),
             status: 'Active',
             feeStatus: 'Paid',
@@ -232,7 +232,7 @@ router.put('/:id/status', async (req, res) => {
           });
           await newStudent.save();
         } else {
-          existingStu.password = uniquePassword;
+          existingStu.password = hashedPassword;
           await existingStu.save();
         }
       }
@@ -246,7 +246,7 @@ router.put('/:id/status', async (req, res) => {
           studentEmail: updatedApp.email,
           name: updatedApp.name,
           studentId: assignedId || updatedApp.studentIdAssigned,
-          password: uniquePassword || updatedApp.assignedPassword,
+          password: uniquePassword,
           course: updatedApp.targetCourse
         });
         console.log(`📧 [Student Credential Dispatch] Sent to ${updatedApp.email}:`, resEmail);
@@ -258,16 +258,15 @@ router.put('/:id/status', async (req, res) => {
     return res.json({
       success: true,
       message: `Application ${appId} marked as ${status}`,
-      assignedStudentId: assignedId || updatedApp.studentIdAssigned,
-      assignedPassword: uniquePassword || updatedApp.assignedPassword
+      assignedStudentId: assignedId || updatedApp.studentIdAssigned
     });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Error processing application status' });
   }
 });
 
-// DELETE /api/admissions/:id - Admin Delete Application permanently from database
-router.delete('/:id', async (req, res) => {
+// DELETE /api/admissions/:id - Admin Delete Application (Protected: Admin Only)
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const appId = req.params.id.trim().toUpperCase();
     await connectDB();

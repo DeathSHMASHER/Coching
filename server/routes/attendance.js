@@ -3,9 +3,10 @@ const router = express.Router();
 const Attendance = require('../models/Attendance');
 const { getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { requireAdmin, requireStudentOrAdmin } = require('../middleware/auth');
 
-// Student: Get attendance logs & stats for studentId
-router.get('/:studentId', async (req, res) => {
+// Student / Admin: Get attendance logs & stats for studentId (Protected: Student or Admin)
+router.get('/:studentId', requireStudentOrAdmin, async (req, res) => {
   try {
     const cleanId = req.params.studentId.trim().toUpperCase();
     const { useMock } = getDbState();
@@ -46,8 +47,8 @@ router.get('/:studentId', async (req, res) => {
   }
 });
 
-// Admin: Mark or Update attendance for a student
-router.post('/mark', async (req, res) => {
+// Admin: Mark or Update attendance for a student (Protected: Admin Only)
+router.post('/mark', requireAdmin, async (req, res) => {
   try {
     const { studentId, date, status, topicCovered } = req.body;
 
@@ -73,7 +74,7 @@ router.post('/mark', async (req, res) => {
           date,
           status,
           topicCovered: topicCovered || 'Regular Scheduled Lecture',
-          updatedBy: 'Admin'
+          updatedBy: req.user ? req.user.name || 'Admin' : 'Admin'
         });
       }
 
@@ -81,7 +82,7 @@ router.post('/mark', async (req, res) => {
     } else {
       await Attendance.findOneAndUpdate(
         { studentId: cleanId, date },
-        { status, topicCovered: topicCovered || 'Regular Scheduled Lecture', updatedBy: 'Admin' },
+        { status, topicCovered: topicCovered || 'Regular Scheduled Lecture', updatedBy: req.user ? req.user.name || 'Admin' : 'Admin' },
         { upsert: true, new: true }
       );
 

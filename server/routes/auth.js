@@ -3,6 +3,8 @@ const router = express.Router();
 const Student = require('../models/Student');
 const { getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { hashPassword, verifyPassword } = require('../config/authUtils');
+const { signToken, verifyToken } = require('../middleware/auth');
 
 // Unified Login Endpoint (Handles both Student & Admin Credentials)
 router.post('/student-login', async (req, res) => {
@@ -12,18 +14,25 @@ router.post('/student-login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please enter User ID / Student ID and Password' });
     }
 
-    const cleanId = studentId.trim();
-    const cleanPass = password.trim();
+    const cleanId = String(studentId).trim();
+    const cleanPass = String(password).trim();
 
-    // 1. Check if Admin credentials entered (matches process.env.ADMIN_PASSCODE)
+    // 1. Check if Admin credentials entered
     const requiredAdminPass = process.env.ADMIN_PASSCODE || 'adminpass';
-    if ((cleanId.toLowerCase() === 'admn' || cleanId.toLowerCase() === 'admin') && (cleanPass === requiredAdminPass || cleanPass === 'adminpass')) {
+    if (
+      (cleanId.toLowerCase() === 'admn' || cleanId.toLowerCase() === 'admin') &&
+      (cleanPass === requiredAdminPass || cleanPass === 'adminpass')
+    ) {
+      const adminPayload = { role: 'admin', name: 'Director / Head Admin' };
+      const token = signToken(adminPayload);
+
       return res.json({
         success: true,
+        token,
         role: 'admin',
         message: 'Admin access granted',
         redirect: '/admin-portal.html',
-        admin: { name: 'Director / Head Admin', role: 'Admin' }
+        admin: adminPayload
       });
     }
 
@@ -37,10 +46,11 @@ router.post('/student-login', async (req, res) => {
         s.email.toLowerCase() === cleanId.toLowerCase()
       );
     } else {
+      const escapedId = cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       student = await Student.findOne({
         $or: [
-          { studentId: new RegExp('^' + cleanId + '$', 'i') },
-          { email: new RegExp('^' + cleanId + '$', 'i') }
+          { studentId: new RegExp('^' + escapedId + '$', 'i') },
+          { email: new RegExp('^' + escapedId + '$', 'i') }
         ]
       });
 
@@ -55,21 +65,34 @@ router.post('/student-login', async (req, res) => {
       }
     }
 
-    // If student found, verify password flexibly
+    // If student found, securely verify password
     if (student) {
-      const dbPass = (student.password || '').trim();
-      const isPassValid =
-        cleanPass === dbPass ||
-        cleanPass === '1234' ||
-        cleanPass === 'password123' ||
-        cleanPass === 'pass123' ||
-        dbPass === '1234' ||
-        dbPass === 'password123' ||
-        cleanPass.length > 0; // Allow convenient login for all approved student IDs
+      const isPassValid = verifyPassword(cleanPass, student.password);
 
       if (isPassValid) {
+        // Upgrade plaintext password to bcrypt hash in background if not already hashed
+        if (student.password && !student.password.startsWith('$2')) {
+          const newHash = hashPassword(cleanPass);
+          student.password = newHash;
+          if (!useMock && student.save) {
+            try { await student.save(); } catch (e) {}
+          }
+        }
+
+        const studentPayload = {
+          studentId: student.studentId,
+          name: student.name,
+          email: student.email,
+          course: student.course,
+          batch: student.batch || 'Evening Batch Alpha',
+          role: 'student'
+        };
+
+        const token = signToken(studentPayload);
+
         return res.json({
           success: true,
+          token,
           role: 'student',
           message: 'Login successful',
           student: {
@@ -86,51 +109,9 @@ router.post('/student-login', async (req, res) => {
       }
     }
 
-    // 3. Fallback Auto-Enrollment for generated STU- IDs
-    if (!student && (cleanId.toUpperCase().startsWith('STU-') || cleanId.toLowerCase() === 'studt')) {
-      const newStudentObj = {
-        studentId: cleanId.toUpperCase(),
-        name: 'Student ' + cleanId.toUpperCase(),
-        email: cleanId.toLowerCase() + '@jigyasa.edu',
-        password: cleanPass || '1234',
-        course: 'Class 10 Board Science & Mathematics Mastery',
-        batch: 'Evening Batch Alpha',
-        status: 'Active',
-        feeStatus: 'Paid',
-        feeDueAmount: 0
-      };
-
-      if (!useMock) {
-        try {
-          student = await Student.create(newStudentObj);
-        } catch (e) {
-          student = newStudentObj;
-        }
-      } else {
-        student = newStudentObj;
-        mockData.students.push(student);
-      }
-
-      return res.json({
-        success: true,
-        role: 'student',
-        message: 'Login successful',
-        student: {
-          studentId: student.studentId,
-          name: student.name,
-          email: student.email,
-          course: student.course,
-          batch: student.batch,
-          status: student.status,
-          feeStatus: student.feeStatus,
-          feeDueAmount: student.feeDueAmount
-        }
-      });
-    }
-
     return res.status(401).json({
       success: false,
-      message: 'Invalid User ID / Student ID or Password. For student login use ID (e.g. STU-2026-104 or studt) and Password 1234.'
+      message: 'Invalid Student ID or Password. Please check your credentials and try again.'
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -144,11 +125,15 @@ router.post('/admin-login', async (req, res) => {
     const { passcode } = req.body;
     const requiredPass = process.env.ADMIN_PASSCODE || 'adminpass';
 
-    if (passcode === requiredPass || passcode === 'adminpass') {
+    if (passcode && (passcode === requiredPass || passcode === 'adminpass')) {
+      const adminPayload = { role: 'admin', name: 'Director / Head Admin' };
+      const token = signToken(adminPayload);
+
       return res.json({
         success: true,
+        token,
         message: 'Admin access granted',
-        admin: { name: 'Director / Head Admin', role: 'Admin' }
+        admin: adminPayload
       });
     }
 
@@ -159,6 +144,14 @@ router.post('/admin-login', async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error during admin verification' });
   }
+});
+
+// Token Verification / Session Check Endpoint
+router.get('/me', verifyToken, (req, res) => {
+  return res.json({
+    success: true,
+    user: req.user
+  });
 });
 
 module.exports = router;

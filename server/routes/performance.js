@@ -5,9 +5,10 @@ const Attendance = require('../models/Attendance');
 const Student = require('../models/Student');
 const { getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { requireAdmin, requireStudentOrAdmin } = require('../middleware/auth');
 
-// GET /api/performance/:studentId: Get student composite performance index out of 100
-router.get('/:studentId', async (req, res) => {
+// GET /api/performance/:studentId: Get student composite performance index (Protected: Student or Admin)
+router.get('/:studentId', requireStudentOrAdmin, async (req, res) => {
   try {
     const cleanId = req.params.studentId.trim().toUpperCase();
     const { useMock } = getDbState();
@@ -21,9 +22,10 @@ router.get('/:studentId', async (req, res) => {
       attRecords = (mockData.attendance || []).filter(a => a.studentId.toUpperCase() === cleanId);
       student = (mockData.students || []).find(s => s.studentId.toUpperCase() === cleanId);
     } else {
+      const escapedId = cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       records = await Performance.find({ studentId: cleanId }).sort({ date: -1 });
       attRecords = await Attendance.find({ studentId: cleanId });
-      student = await Student.findOne({ studentId: new RegExp('^' + cleanId + '$', 'i') });
+      student = await Student.findOne({ studentId: new RegExp('^' + escapedId + '$', 'i') });
     }
 
     // 1. Exam Marks Average (50% Weight)
@@ -127,8 +129,8 @@ router.get('/:studentId', async (req, res) => {
   }
 });
 
-// Admin: Add or Update student test performance report
-router.post('/add', async (req, res) => {
+// Admin: Add or Update student test performance report (Protected: Admin Only)
+router.post('/add', requireAdmin, async (req, res) => {
   try {
     const {
       studentId,
@@ -152,7 +154,7 @@ router.post('/add', async (req, res) => {
 
     const perfPayload = {
       studentId: cleanId,
-      examTitle,
+      examTitle: String(examTitle).trim(),
       batch: req.body.batch || 'General Batch',
       date: date || new Date().toISOString().split('T')[0],
       totalScore: Number(totalScore),
@@ -160,7 +162,7 @@ router.post('/add', async (req, res) => {
       subjectBreakdown: subjectBreakdown || { Physics: Number(totalScore) },
       rank: Number(rank) || 1,
       percentile: Number(percentile) || 95.0,
-      remarks: remarks || 'Good effort. Keep improving step by step.'
+      remarks: remarks ? String(remarks).trim() : 'Good effort. Keep improving step by step.'
     };
 
     if (useMock) {
@@ -174,7 +176,8 @@ router.post('/add', async (req, res) => {
       const created = await Performance.create(perfPayload);
       perfPayload._id = created._id;
       if (classParticipation !== undefined) {
-        await Student.updateOne({ studentId: new RegExp('^' + cleanId + '$', 'i') }, { classParticipation: Number(classParticipation) });
+        const escapedId = cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        await Student.updateOne({ studentId: new RegExp('^' + escapedId + '$', 'i') }, { classParticipation: Number(classParticipation) });
       }
     }
 
@@ -184,8 +187,8 @@ router.post('/add', async (req, res) => {
   }
 });
 
-// Admin: Get all performance reports
-router.get('/all/reports', async (req, res) => {
+// Admin: Get all performance reports (Protected: Admin Only)
+router.get('/all/reports', requireAdmin, async (req, res) => {
   try {
     const { useMock } = getDbState();
     let reports = [];
@@ -200,8 +203,8 @@ router.get('/all/reports', async (req, res) => {
   }
 });
 
-// Admin: Update performance report
-router.put('/:reportId', async (req, res) => {
+// Admin: Update performance report (Protected: Admin Only)
+router.put('/:reportId', requireAdmin, async (req, res) => {
   try {
     const reportId = req.params.reportId;
     const { useMock } = getDbState();
@@ -256,7 +259,8 @@ router.put('/:reportId', async (req, res) => {
         remarks
       });
       if (cleanId && classParticipation !== undefined) {
-        await Student.updateOne({ studentId: new RegExp('^' + cleanId + '$', 'i') }, { classParticipation: Number(classParticipation) });
+        const escapedId = cleanId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        await Student.updateOne({ studentId: new RegExp('^' + escapedId + '$', 'i') }, { classParticipation: Number(classParticipation) });
       }
     }
 
@@ -266,8 +270,8 @@ router.put('/:reportId', async (req, res) => {
   }
 });
 
-// Admin: Delete performance report
-router.delete('/:reportId', async (req, res) => {
+// Admin: Delete performance report (Protected: Admin Only)
+router.delete('/:reportId', requireAdmin, async (req, res) => {
   try {
     const reportId = req.params.reportId;
     const { useMock } = getDbState();
@@ -288,4 +292,3 @@ router.delete('/:reportId', async (req, res) => {
 });
 
 module.exports = router;
-

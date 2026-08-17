@@ -4,9 +4,10 @@ const mongoose = require('mongoose');
 const Doubt = require('../models/Doubt');
 const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { verifyToken, requireAdmin, requireStudentOrAdmin } = require('../middleware/auth');
 
-// Student: Get doubts for a specific student
-router.get('/student/:studentId', async (req, res) => {
+// Student / Admin: Get doubts for a specific student (Protected: Student or Admin)
+router.get('/student/:studentId', requireStudentOrAdmin, async (req, res) => {
   try {
     const cleanId = req.params.studentId.trim();
     await connectDB();
@@ -28,15 +29,15 @@ router.get('/student/:studentId', async (req, res) => {
   }
 });
 
-// Alias: /api/doubts/:studentId
-router.get('/:studentId', async (req, res, next) => {
+// Alias: /api/doubts/:studentId (Protected: Student or Admin)
+router.get('/:studentId', requireStudentOrAdmin, async (req, res, next) => {
   if (req.params.studentId === 'all') return next();
   req.url = '/student/' + encodeURIComponent(req.params.studentId);
   return router.handle(req, res, next);
 });
 
-// Admin: Get all doubts (pending & resolved)
-router.get('/all', async (req, res) => {
+// Admin: Get all doubts (Protected: Admin Only)
+router.get('/all', requireAdmin, async (req, res) => {
   try {
     await connectDB();
     let doubts = [];
@@ -53,26 +54,29 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// Student: Submit new doubt
-router.post('/raise', async (req, res) => {
+// Student: Submit new doubt (Protected: Logged in Student / User)
+router.post('/raise', verifyToken, async (req, res) => {
   try {
     const { studentId, studentName, subject, topic, question } = req.body;
 
-    if (!studentId || !subject || !topic || !question) {
+    const actualStudentId = (req.user && req.user.studentId) ? req.user.studentId : (studentId || '').trim();
+    const actualStudentName = (req.user && req.user.name) ? req.user.name : (studentName || 'Registered Student');
+
+    if (!actualStudentId || !subject || !topic || !question) {
       return res.status(400).json({ success: false, message: 'Student ID, Subject, Topic, and Question are required.' });
     }
 
-    const cleanId = studentId.trim();
+    const cleanId = actualStudentId.trim();
     const doubtId = `DBT-${Math.floor(100 + Math.random() * 900)}`;
     const { useMock } = getDbState();
 
     const doubtData = {
       doubtId,
       studentId: cleanId,
-      studentName: studentName || 'Registered Student',
-      subject,
-      topic,
-      question,
+      studentName: actualStudentName,
+      subject: String(subject).trim().slice(0, 100),
+      topic: String(topic).trim().slice(0, 150),
+      question: String(question).trim().slice(0, 2000),
       status: 'Pending',
       solution: '',
       createdAt: new Date()
@@ -92,8 +96,8 @@ router.post('/raise', async (req, res) => {
   }
 });
 
-// Admin: Solve & resolve student doubt
-router.put('/:doubtId/resolve', async (req, res) => {
+// Admin: Solve & resolve student doubt (Protected: Admin Only)
+router.put('/:doubtId/resolve', requireAdmin, async (req, res) => {
   try {
     const { doubtId } = req.params;
     const { solution } = req.body;
@@ -102,6 +106,7 @@ router.put('/:doubtId/resolve', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Solution text is required.' });
     }
 
+    const cleanSolution = String(solution).trim();
     const { useMock } = getDbState();
 
     if (useMock) {
@@ -110,7 +115,7 @@ router.put('/:doubtId/resolve', async (req, res) => {
         return res.status(404).json({ success: false, message: 'Doubt ticket not found.' });
       }
       dbt.status = 'Resolved';
-      dbt.solution = solution;
+      dbt.solution = cleanSolution;
       dbt.answeredAt = new Date();
 
       return res.json({ success: true, message: 'Doubt solution published.', doubt: dbt });
@@ -121,7 +126,7 @@ router.put('/:doubtId/resolve', async (req, res) => {
       }
       const dbt = await Doubt.findOneAndUpdate(
         query,
-        { status: 'Resolved', solution, answeredAt: new Date() },
+        { status: 'Resolved', solution: cleanSolution, answeredAt: new Date() },
         { new: true }
       );
 
@@ -136,8 +141,8 @@ router.put('/:doubtId/resolve', async (req, res) => {
   }
 });
 
-// Admin: Delete doubt ticket permanently from database
-router.delete('/:doubtId', async (req, res) => {
+// Admin: Delete doubt ticket permanently from database (Protected: Admin Only)
+router.delete('/:doubtId', requireAdmin, async (req, res) => {
   try {
     const { doubtId } = req.params;
     const { useMock } = getDbState();

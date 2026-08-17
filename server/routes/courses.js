@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Course = require('../models/Course');
 const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { requireAdmin } = require('../middleware/auth');
 
 const DEFAULT_COURSES = [
   {
@@ -222,7 +223,7 @@ async function seedDefaultCourses() {
   }
 }
 
-// GET /api/courses: Fetch all active courses
+// GET /api/courses: Fetch all active courses (Public)
 router.get('/', async (req, res) => {
   try {
     await connectDB();
@@ -247,7 +248,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/courses/:courseId: Fetch single course by ID
+// GET /api/courses/:courseId: Fetch single course by ID (Public)
 router.get('/:courseId', async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -274,8 +275,8 @@ router.get('/:courseId', async (req, res) => {
   }
 });
 
-// PUT /api/courses/:courseId: Admin update course fee or details
-router.put('/:courseId', async (req, res) => {
+// PUT /api/courses/:courseId: Admin update course fee or details (Protected: Admin Only)
+router.put('/:courseId', requireAdmin, async (req, res) => {
   try {
     const { courseId } = req.params;
     const { currentFee, originalFee, title, description, timings, subjects } = req.body;
@@ -284,9 +285,9 @@ router.put('/:courseId', async (req, res) => {
     const updateData = {};
     if (currentFee !== undefined) updateData.currentFee = Number(currentFee);
     if (originalFee !== undefined) updateData.originalFee = Number(originalFee);
-    if (title) updateData.title = title.trim();
-    if (description) updateData.description = description.trim();
-    if (timings) updateData.timings = timings.trim();
+    if (title) updateData.title = String(title).trim();
+    if (description) updateData.description = String(description).trim();
+    if (timings) updateData.timings = String(timings).trim();
     if (Array.isArray(subjects)) updateData.subjects = subjects;
 
     if (process.env.MONGODB_URI) {
@@ -315,15 +316,15 @@ router.put('/:courseId', async (req, res) => {
   }
 });
 
-// PUT /api/courses/:courseId/subjects: Add or remove subjects from a course
-router.put('/:courseId/subjects', async (req, res) => {
+// PUT /api/courses/:courseId/subjects: Add or remove subjects from a course (Protected: Admin Only)
+router.put('/:courseId/subjects', requireAdmin, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { action, subject } = req.body; // action: 'add' or 'remove'
+    const { action, subject } = req.body;
     if (!subject) return res.status(400).json({ success: false, message: 'Subject name is required.' });
 
     await connectDB();
-    const cleanSub = subject.trim();
+    const cleanSub = String(subject).trim();
 
     if (process.env.MONGODB_URI) {
       let query = { courseId: courseId };
@@ -363,8 +364,8 @@ router.put('/:courseId/subjects', async (req, res) => {
   }
 });
 
-// DELETE /api/courses/:courseId: Admin delete course manually from catalog
-router.delete('/:courseId', async (req, res) => {
+// DELETE /api/courses/:courseId: Admin delete course (Protected: Admin Only)
+router.delete('/:courseId', requireAdmin, async (req, res) => {
   try {
     const { courseId } = req.params;
     await connectDB();

@@ -5,19 +5,18 @@ const LiveClassLog = require('../models/LiveClassLog');
 const Student = require('../models/Student');
 const { connectDB, getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { verifyToken, requireAdmin, requireStudentOrAdmin } = require('../middleware/auth');
 
 // Helper: Compile raw phone or clipboard text into a clean Google Meet URL
 function compileMeetLink(input) {
   if (!input) return 'https://meet.google.com';
   let str = String(input).trim();
 
-  // Extract URL substring if full text copied from phone (e.g. "Join Meet: https://meet.google.com/xyz")
   const urlMatch = str.match(/https?:\/\/[^\s]+/i);
   if (urlMatch) {
     str = urlMatch[0];
   }
 
-  // Remove internal spaces
   str = str.replace(/\s+/g, '');
 
   if (/^https?:\/\//i.test(str)) {
@@ -41,8 +40,8 @@ function compileMeetLink(input) {
   return 'https://' + str;
 }
 
-// GET /api/live-classes: Fetch all scheduled live classes (Admin)
-router.get('/', async (req, res) => {
+// GET /api/live-classes: Fetch all scheduled live classes (Protected: Admin Only)
+router.get('/', requireAdmin, async (req, res) => {
   try {
     await connectDB();
     let classes = [];
@@ -59,8 +58,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/live-classes/student/:studentId: Fetch live class meeting links tailored for student's enrolled course
-router.get('/student/:studentId', async (req, res) => {
+// GET /api/live-classes/student/:studentId: Fetch live class meeting links tailored for student's enrolled course (Protected: Student or Admin)
+router.get('/student/:studentId', requireStudentOrAdmin, async (req, res) => {
   try {
     const { studentId } = req.params;
     await connectDB();
@@ -69,7 +68,8 @@ router.get('/student/:studentId', async (req, res) => {
     let allClasses = [];
 
     if (process.env.MONGODB_URI) {
-      student = await Student.findOne({ studentId: new RegExp('^' + studentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+      const escapedId = studentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      student = await Student.findOne({ studentId: new RegExp('^' + escapedId + '$', 'i') });
       allClasses = await LiveClass.find().sort({ createdAt: -1 });
     } else {
       student = (mockData.students || []).find(s => s.studentId.toLowerCase() === studentId.toLowerCase());
@@ -101,8 +101,8 @@ router.get('/student/:studentId', async (req, res) => {
   }
 });
 
-// POST /api/live-classes/schedule: Admin schedule live class link
-router.post('/schedule', async (req, res) => {
+// POST /api/live-classes/schedule: Admin schedule live class link (Protected: Admin Only)
+router.post('/schedule', requireAdmin, async (req, res) => {
   try {
     const { title, targetBatch, meetingLink, date, time, notes } = req.body;
 
@@ -115,13 +115,13 @@ router.post('/schedule', async (req, res) => {
 
     const newClass = {
       classId: 'LIV-' + Date.now().toString().slice(-5),
-      title,
+      title: String(title).trim(),
       targetBatch: targetBatch || 'All Batches',
       meetingLink: cleanLink,
       date: date || new Date().toISOString().split('T')[0],
       time: time || '7:30 PM - 9:00 PM',
       instructor: 'Shahriyar Taufik',
-      notes: notes || '',
+      notes: notes ? String(notes).trim() : '',
       status: 'Upcoming'
     };
 
@@ -142,12 +142,15 @@ router.post('/schedule', async (req, res) => {
   }
 });
 
-// POST /api/live-classes/join-log: Student joins live class, log exact timestamp down to the second
-router.post('/join-log', async (req, res) => {
+// POST /api/live-classes/join-log: Student joins live class, log exact timestamp (Protected: Student / Logged in User)
+router.post('/join-log', verifyToken, async (req, res) => {
   try {
     const { classId, classTitle, studentId, studentName, targetBatch } = req.body;
 
-    if (!studentId || !classId) {
+    const actualStudentId = (req.user && req.user.studentId) ? req.user.studentId : (studentId || '').trim();
+    const actualStudentName = (req.user && req.user.name) ? req.user.name : (studentName || 'Registered Student');
+
+    if (!actualStudentId || !classId) {
       return res.status(400).json({ success: false, message: 'Student ID and Class ID are required.' });
     }
 
@@ -163,13 +166,13 @@ router.post('/join-log', async (req, res) => {
       minute: '2-digit',
       second: '2-digit',
       hour12: true
-    }); // e.g. "13 Aug 2026, 07:15:34 PM"
+    });
 
     const logData = {
       classId,
       classTitle: classTitle || 'Live Class Session',
-      studentId: studentId.trim().toUpperCase(),
-      studentName: studentName || 'Registered Student',
+      studentId: actualStudentId.trim().toUpperCase(),
+      studentName: actualStudentName,
       targetBatch: targetBatch || 'General Batch',
       joinedAtFormatted,
       joinedAt: now
@@ -194,8 +197,8 @@ router.post('/join-log', async (req, res) => {
   }
 });
 
-// GET /api/live-classes/join-logs: Admin / Mentor fetch all student join logs
-router.get('/join-logs', async (req, res) => {
+// GET /api/live-classes/join-logs: Admin fetch all student join logs (Protected: Admin Only)
+router.get('/join-logs', requireAdmin, async (req, res) => {
   try {
     await connectDB();
     let logs = [];
@@ -212,8 +215,8 @@ router.get('/join-logs', async (req, res) => {
   }
 });
 
-// DELETE /api/live-classes/:classId: Admin delete scheduled live class
-router.delete('/:classId', async (req, res) => {
+// DELETE /api/live-classes/:classId: Admin delete scheduled live class (Protected: Admin Only)
+router.delete('/:classId', requireAdmin, async (req, res) => {
   try {
     const { classId } = req.params;
     await connectDB();

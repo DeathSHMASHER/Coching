@@ -34,7 +34,8 @@ async function handleAdminPasscodeLogin(e) {
   const res = await apiRequest('/auth/admin-login', 'POST', { passcode });
 
   if (res.success) {
-    sessionStorage.setItem('jigyasa_admin_token', 'admin_logged_in_' + Date.now());
+    sessionStorage.setItem('jigyasa_admin_token', res.token);
+    sessionStorage.setItem('jigyasa_auth_token', res.token);
     sessionStorage.setItem('jigyasa_admin_user', JSON.stringify(res.admin));
     showToast('Admin Access Granted!', 'success');
     unlockAdminDesk();
@@ -78,6 +79,7 @@ async function refreshAdminData() {
 
 function logoutAdmin() {
   sessionStorage.removeItem('jigyasa_admin_token');
+  sessionStorage.removeItem('jigyasa_auth_token');
   sessionStorage.removeItem('jigyasa_admin_user');
   showToast('Logged out of Admin Desk.', 'info');
   window.location.href = '/student-portal.html';
@@ -126,13 +128,13 @@ async function loadLiveClassLogsAdmin() {
 
   body.innerHTML = res.logs.map(l => `
     <tr>
-      <td><span class="chip chip-gold" style="font-family:monospace;font-weight:700;"><i class="fa-solid fa-clock"></i> ${l.joinedAtFormatted || new Date(l.joinedAt).toLocaleString()}</span></td>
+      <td><span class="chip chip-gold" style="font-family:monospace;font-weight:700;"><i class="fa-solid fa-clock"></i> ${escapeHTML(l.joinedAtFormatted || new Date(l.joinedAt).toLocaleString())}</span></td>
       <td>
-        <div class="font-bold">${l.studentName}</div>
-        <div class="text-xs c-cyan">${l.studentId}</div>
+        <div class="font-bold">${escapeHTML(l.studentName)}</div>
+        <div class="text-xs c-cyan">${escapeHTML(l.studentId)}</div>
       </td>
-      <td class="text-sm font-bold">${l.classTitle}</td>
-      <td><span class="chip chip-cyan">${l.targetBatch}</span></td>
+      <td class="text-sm font-bold">${escapeHTML(l.classTitle)}</td>
+      <td><span class="chip chip-cyan">${escapeHTML(l.targetBatch)}</span></td>
     </tr>
   `).join('');
 }
@@ -404,24 +406,24 @@ async function loadAdmissionsQueue() {
 
   body.innerHTML = apps.map(a => `
     <tr>
-      <td><span class="chip chip-cyan">${a.applicationId}</span></td>
+      <td><span class="chip chip-cyan">${escapeHTML(a.applicationId)}</span></td>
       <td>
-        <div class="font-bold">${a.name}</div>
-        <div class="text-xs text-muted">${a.email} • ${a.phone}</div>
+        <div class="font-bold">${escapeHTML(a.name)}</div>
+        <div class="text-xs text-muted">${escapeHTML(a.email)} • ${escapeHTML(a.phone)}</div>
       </td>
-      <td class="text-sm">${a.targetCourse}</td>
-      <td class="text-sm">${a.previousPercentage ? a.previousPercentage + '%' : 'N/A'}</td>
+      <td class="text-sm">${escapeHTML(a.targetCourse)}</td>
+      <td class="text-sm">${a.previousPercentage ? escapeHTML(a.previousPercentage) + '%' : 'N/A'}</td>
       <td>
-        <span class="chip ${a.status === 'Approved' ? 'chip-green' : a.status === 'Rejected' ? 'chip-red' : 'chip-amber'}">${a.status}</span>
-        ${a.studentIdAssigned ? `<div class="text-xs c-cyan mt-1">ID: ${a.studentIdAssigned} (Pass: 1234)</div>` : ''}
+        <span class="chip ${a.status === 'Approved' ? 'chip-green' : a.status === 'Rejected' ? 'chip-red' : 'chip-amber'}">${escapeHTML(a.status)}</span>
+        ${a.studentIdAssigned ? `<div class="text-xs c-cyan mt-1">ID: ${escapeHTML(a.studentIdAssigned)}</div>` : ''}
       </td>
       <td>
         <div style="display:flex;gap:0.4rem;align-items:center;">
           ${a.status === 'Pending' ? `
-            <button class="btn btn-sm btn-grad" onclick="updateAppStatus('${a.applicationId}', 'Approved')">Approve</button>
-            <button class="btn btn-sm btn-outline" onclick="updateAppStatus('${a.applicationId}', 'Rejected')">Reject</button>
+            <button class="btn btn-sm btn-grad" onclick="updateAppStatus('${escapeHTML(a.applicationId)}', 'Approved')">Approve</button>
+            <button class="btn btn-sm btn-outline" onclick="updateAppStatus('${escapeHTML(a.applicationId)}', 'Rejected')">Reject</button>
           ` : `<span class="text-xs text-muted">Processed</span>`}
-          <button class="btn btn-sm btn-danger" onclick="deleteAdmissionApp('${a.applicationId}')" title="Delete application permanently">
+          <button class="btn btn-sm btn-danger" onclick="deleteAdmissionApp('${escapeHTML(a.applicationId)}')" title="Delete application permanently">
             <i class="fa-solid fa-trash"></i> Delete
           </button>
         </div>
@@ -727,13 +729,13 @@ async function loadNoticesAdmin() {
   list.innerHTML = res.notices.map(n => `
     <div class="card card-p2 mb-2">
       <div style="display:flex;align-items:center;justify-content:space-between;" class="mb-1">
-        <span class="chip chip-cyan">${n.category}</span>
-        <button class="btn btn-sm btn-danger" onclick="deleteNotice('${n.noticeId}')">
+        <span class="chip chip-cyan">${escapeHTML(n.category)}</span>
+        <button class="btn btn-sm btn-danger" onclick="deleteNotice('${escapeHTML(n.noticeId)}')">
           <i class="fa-solid fa-trash"></i> Delete
         </button>
       </div>
-      <h4 style="font-weight:700;">${n.title}</h4>
-      <p class="text-sm text-muted">${n.content}</p>
+      <h4 style="font-weight:700;">${escapeHTML(n.title)}</h4>
+      <p class="text-sm text-muted">${escapeHTML(n.content)}</p>
     </div>
   `).join('');
 }
@@ -764,20 +766,20 @@ async function loadDoubtsAdmin() {
   feed.innerHTML = res.doubts.map(d => `
     <div class="card card-p2 mb-2">
       <div class="di-head">
-        <span class="chip ${d.status === 'Resolved' ? 'chip-green' : 'chip-amber'}">${d.status}</span>
-        <span class="text-xs text-muted">${d.studentName} (${d.studentId}) • ${d.subject}</span>
-        <button class="btn btn-sm btn-danger" onclick="deleteDoubtAdmin('${d.doubtId}')" title="Delete ticket permanently">
+        <span class="chip ${d.status === 'Resolved' ? 'chip-green' : 'chip-amber'}">${escapeHTML(d.status)}</span>
+        <span class="text-xs text-muted">${escapeHTML(d.studentName)} (${escapeHTML(d.studentId)}) • ${escapeHTML(d.subject)}</span>
+        <button class="btn btn-sm btn-danger" onclick="deleteDoubtAdmin('${escapeHTML(d.doubtId)}')" title="Delete ticket permanently">
           <i class="fa-solid fa-trash"></i> Delete
         </button>
       </div>
-      <div class="di-topic">${d.topic}</div>
-      <div class="di-q">"${d.question}"</div>
+      <div class="di-topic">${escapeHTML(d.topic)}</div>
+      <div class="di-q">"${escapeHTML(d.question)}"</div>
       ${d.solution ? `
-        <div class="solution-box"><i class="fa-solid fa-check"></i> ${d.solution}</div>
+        <div class="solution-box"><i class="fa-solid fa-check"></i> ${escapeHTML(d.solution)}</div>
       ` : `
         <div class="input-row mt-2">
-          <input class="form-control" id="sol_${d.doubtId}" type="text" placeholder="Type solution for student..." />
-          <button class="btn btn-sm btn-grad" onclick="resolveDoubtAdmin('${d.doubtId}')">Post Solution</button>
+          <input class="form-control" id="sol_${escapeHTML(d.doubtId)}" type="text" placeholder="Type solution for student..." />
+          <button class="btn btn-sm btn-grad" onclick="resolveDoubtAdmin('${escapeHTML(d.doubtId)}')">Post Solution</button>
         </div>
       `}
     </div>
@@ -826,23 +828,23 @@ async function loadStudentsDirectoryAdmin() {
   body.innerHTML = res.students.map(s => `
     <tr>
       <td>
-        <span class="chip chip-cyan" style="font-weight:800;">${s.studentId}</span>
+        <span class="chip chip-cyan" style="font-weight:800;">${escapeHTML(s.studentId)}</span>
       </td>
-      <td><div class="font-bold">${s.name}</div><div class="text-xs text-muted">${s.email} • ${s.phone || 'N/A'}</div></td>
-      <td class="text-sm">${s.course} <div class="text-xs text-muted">${s.batch || 'General Batch'}</div></td>
+      <td><div class="font-bold">${escapeHTML(s.name)}</div><div class="text-xs text-muted">${escapeHTML(s.email)} • ${escapeHTML(s.phone || 'N/A')}</div></td>
+      <td class="text-sm">${escapeHTML(s.course)} <div class="text-xs text-muted">${escapeHTML(s.batch || 'General Batch')}</div></td>
       <td>
-        <span class="chip ${s.feeStatus === 'Paid' ? 'chip-green' : s.feeStatus === 'Partial' ? 'chip-amber' : 'chip-red'}">${s.feeStatus}</span>
-        ${s.feeDueAmount ? `<div class="text-xs c-red mt-1">Due: ₹${s.feeDueAmount}</div>` : ''}
+        <span class="chip ${s.feeStatus === 'Paid' ? 'chip-green' : s.feeStatus === 'Partial' ? 'chip-amber' : 'chip-red'}">${escapeHTML(s.feeStatus)}</span>
+        ${s.feeDueAmount ? `<div class="text-xs c-red mt-1">Due: ₹${Number(s.feeDueAmount)}</div>` : ''}
       </td>
-      <td><span class="chip ${s.status === 'Active' ? 'chip-green' : 'chip-red'}">${s.status}</span></td>
+      <td><span class="chip ${s.status === 'Active' ? 'chip-green' : 'chip-red'}">${escapeHTML(s.status)}</span></td>
       <td>
         <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
-          <button class="btn btn-sm btn-grad" onclick="openEditStudentFullModal('${s.studentId}')" title="Edit full student profile info">
+          <button class="btn btn-sm btn-grad" onclick="openEditStudentFullModal('${escapeHTML(s.studentId)}')" title="Edit full student profile info">
             <i class="fa-solid fa-user-pen"></i> Edit Info
           </button>
-          <button class="btn btn-sm btn-outline" onclick="openPassResetModal('${s.studentId}', '${s.password || '1234'}')"><i class="fa-solid fa-key"></i> Pass</button>
-          <button class="btn btn-sm btn-outline" onclick="openFeeEditModal('${s.studentId}', '${s.feeStatus}', ${s.feeDueAmount || 0})">Fee</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteStudentAdmin('${s.studentId}')" title="Delete student record permanently">
+          <button class="btn btn-sm btn-outline" onclick="openPassResetModal('${escapeHTML(s.studentId)}')"><i class="fa-solid fa-key"></i> Pass</button>
+          <button class="btn btn-sm btn-outline" onclick="openFeeEditModal('${escapeHTML(s.studentId)}', '${escapeHTML(s.feeStatus)}', ${Number(s.feeDueAmount) || 0})">Fee</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteStudentAdmin('${escapeHTML(s.studentId)}')" title="Delete student record permanently">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>

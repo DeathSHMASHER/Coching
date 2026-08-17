@@ -48,7 +48,8 @@ async function handleStudentLogin(e) {
 
   if (res.success) {
     if (res.role === 'admin') {
-      sessionStorage.setItem('jigyasa_admin_token', 'admin_logged_in_' + Date.now());
+      sessionStorage.setItem('jigyasa_admin_token', res.token);
+      sessionStorage.setItem('jigyasa_auth_token', res.token);
       sessionStorage.setItem('jigyasa_admin_user', JSON.stringify(res.admin));
       showToast('Admin Access Granted! Redirecting to Director Desk...', 'success');
       setTimeout(() => {
@@ -58,8 +59,10 @@ async function handleStudentLogin(e) {
     }
 
     _currentStudent = res.student;
+    sessionStorage.setItem('jigyasa_student_token', res.token);
+    sessionStorage.setItem('jigyasa_auth_token', res.token);
     sessionStorage.setItem('stuData', JSON.stringify(_currentStudent));
-    showToast('Welcome back, ' + _currentStudent.name + '!', 'success');
+    showToast('Welcome back, ' + escapeHTML(_currentStudent.name) + '!', 'success');
     _renderStudentDash();
   } else {
     if (idEl) idEl.classList.add('shake-error');
@@ -116,6 +119,8 @@ async function _renderStudentDash() {
 function logoutStudent() {
   _currentStudent = null;
   sessionStorage.removeItem('stuData');
+  sessionStorage.removeItem('jigyasa_student_token');
+  sessionStorage.removeItem('jigyasa_auth_token');
 
   const authBox = document.getElementById('studentLoginSection') || document.getElementById('studentAuthBox');
   const dashBox = document.getElementById('studentDashboard') || document.getElementById('studentDash');

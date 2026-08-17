@@ -4,8 +4,9 @@ const mongoose = require('mongoose');
 const Notice = require('../models/Notice');
 const { getDbState } = require('../config/db');
 const { mockData } = require('../config/mockStore');
+const { requireAdmin } = require('../middleware/auth');
 
-// GET /api/notices: Fetch broadcast notices
+// GET /api/notices: Fetch broadcast notices (Public)
 router.get('/', async (req, res) => {
   try {
     const { useMock } = getDbState();
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/notices/post & /api/notices/create: Admin broadcast new notice
+// POST /api/notices/post & /api/notices/create: Admin broadcast new notice (Protected: Admin Only)
 const createNoticeHandler = async (req, res) => {
   try {
     const { title, content, category, isImportant, postedBy } = req.body;
@@ -37,11 +38,11 @@ const createNoticeHandler = async (req, res) => {
 
     const payload = {
       noticeId,
-      title,
-      content,
-      category: category || 'General',
+      title: String(title).trim().slice(0, 200),
+      content: String(content).trim().slice(0, 3000),
+      category: category ? String(category).trim().slice(0, 50) : 'General',
       isImportant: !!isImportant,
-      postedBy: postedBy || 'Director Office',
+      postedBy: req.user ? req.user.name || 'Director Office' : (postedBy || 'Director Office'),
       createdAt: new Date()
     };
 
@@ -59,11 +60,11 @@ const createNoticeHandler = async (req, res) => {
   }
 };
 
-router.post('/post', createNoticeHandler);
-router.post('/create', createNoticeHandler);
+router.post('/post', requireAdmin, createNoticeHandler);
+router.post('/create', requireAdmin, createNoticeHandler);
 
-// DELETE /api/notices/:id: Delete notice permanently from database
-router.delete('/:id', async (req, res) => {
+// DELETE /api/notices/:id: Delete notice permanently (Protected: Admin Only)
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const noticeId = req.params.id;
     const { useMock } = getDbState();

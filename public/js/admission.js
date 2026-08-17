@@ -505,18 +505,17 @@ async function checkStatus() {
   if (res.success && res.application) {
     const app = res.application;
     const statusChip = app.status === 'Approved' ? 'chip-green' : app.status === 'Rejected' ? 'chip-red' : 'chip-amber';
-    const uniquePass = app.assignedPassword || 'JIG#' + Math.floor(1000 + Math.random() * 9000);
 
     outEl.innerHTML = `
       <div class="status-result-card mt-2 card card-p2" style="border-color:var(--gold);background:rgba(255,183,3,0.05);">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;" class="mb-1">
           <div>
-            <div style="font-weight:800;font-size:1.1rem;color:var(--text);">${app.name}</div>
-            <div class="text-xs text-muted">App Reference ID: <strong class="c-gold">${app.applicationId}</strong> &nbsp;•&nbsp; ${app.targetCourse}</div>
+            <div style="font-weight:800;font-size:1.1rem;color:var(--text);">${escapeHTML(app.name)}</div>
+            <div class="text-xs text-muted">App Reference ID: <strong class="c-gold">${escapeHTML(app.applicationId)}</strong> &nbsp;•&nbsp; ${escapeHTML(app.targetCourse)}</div>
           </div>
-          <span class="chip ${statusChip}" style="font-size:0.85rem;font-weight:800;">${app.status}</span>
+          <span class="chip ${statusChip}" style="font-size:0.85rem;font-weight:800;">${escapeHTML(app.status)}</span>
         </div>
-        <div class="text-xs text-muted mb-2">Applied Date: ${new Date(app.appliedAt).toLocaleDateString()} &nbsp;|&nbsp; Gmail: ${app.email}</div>
+        <div class="text-xs text-muted mb-2">Applied Date: ${new Date(app.appliedAt).toLocaleDateString()} &nbsp;|&nbsp; Email: ${escapeHTML(app.email)}</div>
 
         ${app.status === 'Approved' ? `
           <div style="background:rgba(0,240,255,0.08);border:1.5px solid var(--cyan);padding:1rem;border-radius:var(--r-sm);" class="mt-2">
@@ -526,14 +525,14 @@ async function checkStatus() {
             <div class="grid g2 mb-2">
               <div style="background:var(--bg-subcard);border:1px solid var(--border-subcard);padding:0.75rem;border-radius:var(--r-xs);">
                 <div class="text-xs text-muted">Assigned Student ID:</div>
-                <div style="font-family:var(--font-heading);font-size:1.3rem;font-weight:800;" class="c-gold">${app.studentIdAssigned}</div>
+                <div style="font-family:var(--font-heading);font-size:1.3rem;font-weight:800;" class="c-gold">${escapeHTML(app.studentIdAssigned)}</div>
               </div>
               <div style="background:var(--bg-subcard);border:1px solid var(--border-subcard);padding:0.75rem;border-radius:var(--r-xs);">
-                <div class="text-xs text-muted">Unique Portal Password (Sent to Gmail):</div>
-                <div style="font-family:var(--font-heading);font-size:1.3rem;font-weight:800;" class="c-cyan"><i class="fa-solid fa-key text-xs"></i> ${uniquePass}</div>
+                <div class="text-xs text-muted">Portal Access:</div>
+                <div style="font-family:var(--font-heading);font-size:1.1rem;font-weight:800;" class="c-cyan"><i class="fa-solid fa-envelope text-xs"></i> Password Dispatched to Email</div>
               </div>
             </div>
-            <p class="text-xs text-muted mb-2"><i class="fa-solid fa-envelope c-gold"></i> Credentials forwarded to registered Gmail: <strong>${app.email}</strong></p>
+            <p class="text-xs text-muted mb-2"><i class="fa-solid fa-envelope c-gold"></i> Credentials forwarded to registered email: <strong>${escapeHTML(app.email)}</strong></p>
             <a href="/student-portal.html" class="btn btn-grad btn-sm btn-block">
               <i class="fa-solid fa-right-to-bracket"></i> Login To Student Portal Now
             </a>
@@ -551,7 +550,7 @@ async function checkStatus() {
   } else {
     queryEl.classList.add('shake-error');
     setTimeout(() => queryEl.classList.remove('shake-error'), 800);
-    outEl.innerHTML = `<div class="status-result-card text-center card card-p2 mt-2" style="border-color:#ef4444;"><i class="fa-solid fa-circle-xmark c-red" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i><p class="text-muted text-sm">${res.message || 'No application record found with provided Application ID, Student ID, or Email.'}</p></div>`;
+    outEl.innerHTML = `<div class="status-result-card text-center card card-p2 mt-2" style="border-color:#ef4444;"><i class="fa-solid fa-circle-xmark c-red" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i><p class="text-muted text-sm">${escapeHTML(res.message) || 'No application record found with provided Application ID, Student ID, or Email.'}</p></div>`;
   }
 }
 window.checkStatus = checkStatus;

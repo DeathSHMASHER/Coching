@@ -19,10 +19,53 @@ const liveClassesRoutes = require('./routes/liveClasses');
 
 const app = express();
 
+// Security Headers Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// Lightweight In-Memory Rate Limiter (Serverless & Standalone Compatible)
+function createRateLimiter(maxRequests = 50, windowMs = 15 * 60 * 1000, message = 'Too many requests. Please try again later.') {
+  const ipBuckets = new Map();
+
+  return (req, res, next) => {
+    // Get client IP
+    const clientIp = req.headers['x-forwarded-for']
+      ? req.headers['x-forwarded-for'].split(',')[0].trim()
+      : req.socket.remoteAddress || 'unknown-ip';
+
+    const now = Date.now();
+    const bucket = ipBuckets.get(clientIp);
+
+    if (!bucket || (now - bucket.startTime > windowMs)) {
+      ipBuckets.set(clientIp, { count: 1, startTime: now });
+      return next();
+    }
+
+    bucket.count++;
+    if (bucket.count > maxRequests) {
+      return res.status(429).json({
+        success: false,
+        message: message,
+        retryAfterMinutes: Math.ceil((windowMs - (now - bucket.startTime)) / 60000)
+      });
+    }
+
+    next();
+  };
+}
+
+const authLimiter = createRateLimiter(30, 15 * 60 * 1000, 'Too many login attempts. Please wait 15 minutes before trying again.');
+const admissionApplyLimiter = createRateLimiter(15, 15 * 60 * 1000, 'Too many application submissions from your device. Please try again later.');
 
 // Netlify Serverless Function Path Normalization Middleware
 app.use((req, res, next) => {
@@ -42,6 +85,15 @@ app.use(async (req, res, next) => {
   }
   next();
 });
+
+// Rate-limited sensitive public endpoints
+app.use('/api/auth/student-login', authLimiter);
+app.use('/api/auth/admin-login', authLimiter);
+app.use('/auth/student-login', authLimiter);
+app.use('/auth/admin-login', authLimiter);
+
+app.use('/api/admissions/apply', admissionApplyLimiter);
+app.use('/admissions/apply', admissionApplyLimiter);
 
 // API Routes (Mounted on both /api/route and /route for Netlify serverless compatibility)
 app.use('/api/auth', authRoutes);
@@ -79,7 +131,8 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
     timestamp: new Date().toISOString(),
-    platform: 'Jigyasa Science Academy API'
+    platform: 'Jigyasa Science Academy API',
+    secured: true
   });
 });
 
